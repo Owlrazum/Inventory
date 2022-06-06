@@ -3,30 +3,30 @@ using System;
 public static class InputQueriesContainer
 {
     #region MovementCommands
-    public static Func<HorizontalMoveCommand> FuncHorizontalMoveCommand;
-    public static HorizontalMoveCommand QueryHorizontalMoveCommand()
+    public static Func<WalkCommand> FuncWalkCommand;
+    public static WalkCommand QueryWalkCommand()
     { 
 #if UNITY_EDITOR
-        if (FuncHorizontalMoveCommand.GetInvocationList().Length != 1)
+        if (FuncWalkCommand.GetInvocationList().Length != 1)
         {
             throw new NotSupportedException("There should be only one subscription");
         }
 #endif
 
-        return FuncHorizontalMoveCommand.Invoke();
+        return FuncWalkCommand.Invoke();
     }
 
-    public static Func<VerticalMoveCommand> FuncVerticalMoveCommand;
-    public static VerticalMoveCommand QueryVerticalMoveCommand()
+    public static Func<InventoryCommand> FuncInventoryCommand;
+    public static InventoryCommand QueryInventoryCommand()
     { 
 #if UNITY_EDITOR
-        if (FuncVerticalMoveCommand.GetInvocationList().Length != 1)
+        if (FuncInventoryCommand.GetInvocationList().Length != 1)
         {
             throw new NotSupportedException("There should be only one subscription");
         }
 #endif
 
-        return FuncVerticalMoveCommand.Invoke();
+        return FuncInventoryCommand.Invoke();
     }
 
     public static Func<JumpCommand> FuncJumpCommand;
@@ -42,19 +42,6 @@ public static class InputQueriesContainer
         return FuncJumpCommand.Invoke();
     }
 
-    public static Func<DashCommand> FuncDashCommand;
-    public static DashCommand QueryDashCommand()
-    { 
-#if UNITY_EDITOR
-        if (FuncDashCommand.GetInvocationList().Length != 1)
-        {
-            throw new NotSupportedException("There should be only one subscription");
-        }
-#endif
-
-        return FuncDashCommand.Invoke();
-    }
-
     public static Func<GlideCommand> FuncGlideCommand;
     public static GlideCommand QueryGlideCommand()
     { 
@@ -68,84 +55,18 @@ public static class InputQueriesContainer
         return FuncGlideCommand.Invoke();
     }
 
-    public static Func<WallRunCommand> FuncWallRunCommand;
-    public static WallRunCommand QueryWallRunCommand()
-    { 
-#if UNITY_EDITOR
-        if (FuncWallRunCommand.GetInvocationList().Length != 1)
-        {
-            throw new NotSupportedException("There should be only one subscription");
-        }
-#endif
-
-        return FuncWallRunCommand.Invoke();
-    }
     #endregion//MovementCommands
 
-    #region CameraAndPortalCommands
-    public static Func<ShootPortalCommand> FuncShootPortalCommand;
-    public static ShootPortalCommand QueryShootPortalCommand()
-    { 
-#if UNITY_EDITOR
-        if (FuncShootPortalCommand.GetInvocationList().Length != 1)
-        {
-            throw new NotSupportedException("There should be only one subscription");
-        }
-#endif
-
-        return FuncShootPortalCommand.Invoke();
-    }
-
-        public static Func<LookUpCommand> FuncLookUpCommand;
-    public static LookUpCommand QueryLookUpCommand()
-    { 
-#if UNITY_EDITOR
-        if (FuncLookUpCommand.GetInvocationList().Length != 1)
-        {
-            throw new NotSupportedException("There should be only one subscription");
-        }
-#endif
-
-        return FuncLookUpCommand.Invoke();
-    }
-
-    public static Func<LookDownCommand> FuncLookDownCommand;
-    public static LookDownCommand QueryLookDownCommand()
-    { 
-#if UNITY_EDITOR
-        if (FuncLookDownCommand.GetInvocationList().Length != 1)
-        {
-            throw new NotSupportedException("There should be only one subscription");
-        }
-#endif
-
-        return FuncLookDownCommand.Invoke();
-    }
-    #endregion//CameraAndPortalCommands
-
-    public static Func<PickUpItemCommand> FuncPickUpMovableCommand;
+    public static Func<PickUpItemCommand> FuncPickUpItemCommand;
     public static PickUpItemCommand QueryPickUpItemCommand()
     { 
 #if UNITY_EDITOR
-        if (FuncPickUpMovableCommand.GetInvocationList().Length != 1)
+        if (FuncPickUpItemCommand.GetInvocationList().Length != 1)
         {
             throw new NotSupportedException("There should be only one subscription");
         }
 #endif
 
-        return FuncPickUpMovableCommand.Invoke();
-    }
-
-    public static Func<RotateShellCommand> FuncRotateShellCommand;
-    public static RotateShellCommand QueryRotateShellCommand()
-    { 
-#if UNITY_EDITOR
-        if (FuncRotateShellCommand.GetInvocationList().Length != 1)
-        {
-            throw new NotSupportedException("There should be only one subscription");
-        }
-#endif
-
-        return FuncRotateShellCommand.Invoke();
+        return FuncPickUpItemCommand.Invoke();
     }
 }
