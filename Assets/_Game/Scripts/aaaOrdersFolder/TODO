@@ -1,0 +1,60 @@
+Needs Testing:
+camera offset more. Smooth the look up and down.
+Specific to the cannon life time max.
+Camera damping value,
+Gravity pull,
+Bugs with jumpables bullets.
+Bugs with portal of destroying
+Double jump availability
+Grounded decide how to use to it properly.
+Jumpable jump can loop to itself.
+Gravity field остается после закрытия портала
+Spherical character
+LineThroughPortal bug construction
+after death all is not working.
+coyote jump triggering just ground jump, after dash;
+Turn off all portals zone
+LevelSegments
+Gravity field trigger. Add timer to exit from the field. New parameter for kylych.
+Add projectie interaction with gravity pull. Inside gravity pull no bullet should highlight.
+Projectile should damage inside gravity field
+Vertical Gravity Field should pop and push on exit the player.
+Low fps clip through wall. Rarely
+
+TODO:
+import Iskender model
+Transition to new state while running coorutine wait.
+Animation run bug.
+
+Decrease shell on sphere form.
+Portals should affect collision, not shell
+Decide what to do with feedback.
+Key pull to the lock.
+Puzzle item gravity pull
+
+Create puzzle elements, levels, buttons, movable items
+Finish Rearranger
+// BuildBugs:
+// Known bugs:
+MaybeSubject to editor playmode: Continiuos input without triggering the key in PlayerWalking. Character walks without holding key down.
+
+Баги:
+Бьющая платформа при ударе сбрасывает игрока
+
+Фичи:
+Коробки берут на себя удары пуль
+Коробки взлетают в грави полях
+
+Deayed features:
+GroundJump Wall run, double jump after wall run. 
+    Reason: 
+    Requeires switch from 2d colliders to 3d. 
+
+Destructuble walls, block crushing, moved from trello
+Animations
+
+Turn off collider either in the beginning of animation transition or ending.
+
+projectile charging up from lazer beam to hit through shell
+
+shell like water.
