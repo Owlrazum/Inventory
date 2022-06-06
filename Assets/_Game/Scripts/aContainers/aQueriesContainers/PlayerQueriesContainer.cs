@@ -30,6 +30,19 @@ public static class PlayerQueriesContainer
         return FuncIsGrounded.Invoke();
     }
 
+    public static Func<bool> FuncWalkedThisFrame;
+    public static bool QueryWalkedThisFrame()
+    { 
+#if UNITY_EDITOR
+        if (FuncWalkedThisFrame.GetInvocationList().Length != 1)
+        {
+            throw new NotSupportedException("There should be only one subscription");
+        }
+#endif
+
+        return FuncWalkedThisFrame.Invoke();
+    }
+
     public static Func<float> FuncSlopeAngleBelowRaycast;
     public static float QuerySlopeAngleBelowRaycast()
     { 

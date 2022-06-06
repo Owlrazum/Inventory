@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 public static class QueriesContainer
 {
@@ -15,17 +16,16 @@ public static class QueriesContainer
         return FuncScenesCount.Invoke();
     }
 
-    public static Func<BeizerSegment> FuncWallRunBeizerSegment;
-    public static BeizerSegment QueryWallRunBeizerSegment()
+    public static Func<Vector3, Vector3> FuncTransformDirectionFromCameraSpace;
+    public static Vector3 QueryTransformDirectionFromCameraSpace(in Vector3 input)
     { 
 #if UNITY_EDITOR
-        if (FuncWallRunBeizerSegment.GetInvocationList().Length != 1)
+        if (FuncTransformDirectionFromCameraSpace.GetInvocationList().Length != 1)
         {
             throw new NotSupportedException("There should be only one subscription");
         }
 #endif
 
-        return FuncWallRunBeizerSegment.Invoke();  
+        return FuncTransformDirectionFromCameraSpace.Invoke(input);
     }
-
 }

@@ -35,24 +35,24 @@ public class InputCommandsSystem : MonoBehaviour
         _pickUpItemCommand = new PickUpItemCommand();
         _pickUpItemCommand.TriggeringKeyCode = KeyCode.E;
 
-        InputQueriesContainer.FuncWalkCommand  += GetWalkCommand;
-        InputQueriesContainer.FuncInventoryCommand  += GetInventoryCommand;
+        InputDelegatesContainer.FuncWalkCommand  += GetWalkCommand;
+        InputDelegatesContainer.FuncInventoryCommand  += GetInventoryCommand;
 
-        InputQueriesContainer.FuncGlideCommand += GetGlideCommand;
-        InputQueriesContainer.FuncJumpCommand  += GetJumpCommand;
+        InputDelegatesContainer.FuncGlideCommand += GetGlideCommand;
+        InputDelegatesContainer.FuncJumpCommand  += GetJumpCommand;
 
-        InputQueriesContainer.FuncPickUpItemCommand += GetPickUpItemCommand;
+        InputDelegatesContainer.FuncPickUpItemCommand += GetPickUpItemCommand;
     }
 
     private void OnDestroy()
     {
-        InputQueriesContainer.FuncWalkCommand  -= GetWalkCommand;
-        InputQueriesContainer.FuncInventoryCommand  -= GetInventoryCommand;
+        InputDelegatesContainer.FuncWalkCommand  -= GetWalkCommand;
+        InputDelegatesContainer.FuncInventoryCommand  -= GetInventoryCommand;
 
-        InputQueriesContainer.FuncGlideCommand -= GetGlideCommand;
-        InputQueriesContainer.FuncJumpCommand  -= GetJumpCommand;
+        InputDelegatesContainer.FuncGlideCommand -= GetGlideCommand;
+        InputDelegatesContainer.FuncJumpCommand  -= GetJumpCommand;
 
-        InputQueriesContainer.FuncPickUpItemCommand -= GetPickUpItemCommand;
+        InputDelegatesContainer.FuncPickUpItemCommand -= GetPickUpItemCommand;
     }
 
     #region MovementCommandsGetterMethods
@@ -112,22 +112,22 @@ public class InputCommandsSystem : MonoBehaviour
 
     private void UpdateWalkCommand()
     {
-        if (Input.GetKeyDown(_walkCommand.UpKeyCode))
+        if (Input.GetKey(_walkCommand.UpKeyCode))
         {
             _walkCommand.Vertical = 1;
         }
 
-        if (Input.GetKeyDown(_walkCommand.RightKeyCode))
+        if (Input.GetKey(_walkCommand.RightKeyCode))
         {
             _walkCommand.Horizontal = 1;
         }
 
-        if (Input.GetKeyDown(_walkCommand.DownKeyCode))
+        if (Input.GetKey(_walkCommand.DownKeyCode))
         {
             _walkCommand.Vertical = -1;
         }
 
-        if (Input.GetKeyDown(_walkCommand.LeftKeyCode))
+        if (Input.GetKey(_walkCommand.LeftKeyCode))
         {
             _walkCommand.Horizontal = -1;
         }

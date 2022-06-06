@@ -1,6 +1,6 @@
 using System;
 
-public static class InputQueriesContainer
+public static class InputDelegatesContainer
 {
     #region MovementCommands
     public static Func<WalkCommand> FuncWalkCommand;
@@ -16,6 +16,7 @@ public static class InputQueriesContainer
         return FuncWalkCommand.Invoke();
     }
 
+    public static Action EventInventoryCommandTriggered;
     public static Func<InventoryCommand> FuncInventoryCommand;
     public static InventoryCommand QueryInventoryCommand()
     { 
