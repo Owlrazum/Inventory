@@ -18,5 +18,6 @@ public class UIInventory : MonoBehaviour
     private void OnInventoryCommandTriggered()
     {
         gameObject.SetActive(true);
+        
     }
 }
