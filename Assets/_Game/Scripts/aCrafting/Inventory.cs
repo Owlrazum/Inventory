@@ -1,19 +1,46 @@
+using System.Collections;
+using System.Collections.Generic;
+
 using UnityEngine;
 
-public class Inventory : MonoBehaviour
+public class Inventory
 {
+    private Dictionary<ItemSO, int> _items;
+
     private void Awake()
     {
-        CraftingDelegatesContainer.FuncInventoryInstance += GetInventoryInstance;
+        _items = new Dictionary<ItemSO, int>();
     }
 
-    private void OnDestroy()
-    { 
-        CraftingDelegatesContainer.FuncInventoryInstance -= GetInventoryInstance;
-    }
-
-    private Inventory GetInventoryInstance()
+    public void AddItem(ItemSO item)
     {
-        return this;
+        if (_items.ContainsKey(item))
+        { 
+            _items[item]++;
+        }
+        else
+        {
+            _items.Add(item, 0);
+        }
+    }
+
+    public void RemoveItem(ItemSO item)
+    {
+        if (!_items.ContainsKey(item))
+        {
+            Debug.LogError("No item " + item + " to remove");
+            return;
+        }
+
+        _items[item]--;
+        if (_items[item] <= 0)
+        {
+            _items.Remove(item);
+        }
+    }
+
+    public Dictionary<ItemSO, int>  GetItems()
+    {
+        return _items;
     }
 }

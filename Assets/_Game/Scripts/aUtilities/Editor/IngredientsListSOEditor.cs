@@ -1,14 +1,14 @@
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(IngredientsListSO))]
+[CustomEditor(typeof(ItemsListSO))]
 public class IngredientsListSOEditor : Editor
 {
     public override void OnInspectorGUI()
     {
         base.OnInspectorGUI();
 
-        IngredientsListSO so = (IngredientsListSO)target;
+        ItemsListSO so = (ItemsListSO)target;
         if (GUILayout.Button("Assing IDs"))
         {
             so.AssignIDs();
