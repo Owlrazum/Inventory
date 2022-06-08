@@ -17,18 +17,6 @@ public static class InputDelegatesContainer
     }
 
     public static Action EventInventoryCommandTriggered;
-    public static Func<InventoryCommand> FuncInventoryCommand;
-    public static InventoryCommand QueryInventoryCommand()
-    { 
-#if UNITY_EDITOR
-        if (FuncInventoryCommand.GetInvocationList().Length != 1)
-        {
-            throw new NotSupportedException("There should be only one subscription");
-        }
-#endif
-
-        return FuncInventoryCommand.Invoke();
-    }
 
     public static Func<JumpCommand> FuncJumpCommand;
     public static JumpCommand QueryJumpCommand()

@@ -24,7 +24,7 @@ public class InputCommandsSystem : MonoBehaviour
         _walkCommand.LeftKeyCode  = KeyCode.A;
 
         _inventoryCommand = new InventoryCommand();
-        _inventoryCommand.TriggeringKeyCode = KeyCode.F;
+        _inventoryCommand.TriggeringKeyCode = KeyCode.E;
 
         _glideCommand = new GlideCommand();
         _glideCommand.TriggeringKeyCode = KeyCode.LeftShift;
@@ -36,7 +36,6 @@ public class InputCommandsSystem : MonoBehaviour
         _pickUpItemCommand.TriggeringKeyCode = KeyCode.E;
 
         InputDelegatesContainer.FuncWalkCommand  += GetWalkCommand;
-        InputDelegatesContainer.FuncInventoryCommand  += GetInventoryCommand;
 
         InputDelegatesContainer.FuncGlideCommand += GetGlideCommand;
         InputDelegatesContainer.FuncJumpCommand  += GetJumpCommand;
@@ -47,7 +46,6 @@ public class InputCommandsSystem : MonoBehaviour
     private void OnDestroy()
     {
         InputDelegatesContainer.FuncWalkCommand  -= GetWalkCommand;
-        InputDelegatesContainer.FuncInventoryCommand  -= GetInventoryCommand;
 
         InputDelegatesContainer.FuncGlideCommand -= GetGlideCommand;
         InputDelegatesContainer.FuncJumpCommand  -= GetJumpCommand;
@@ -92,6 +90,11 @@ public class InputCommandsSystem : MonoBehaviour
         ResetCommands();
 
         UpdateWalkCommand();
+
+        if (Input.GetKeyDown(_inventoryCommand.TriggeringKeyCode))
+        {
+            InputDelegatesContainer.EventInventoryCommandTriggered?.Invoke();
+        }
 
         if (Input.GetKey(_glideCommand.TriggeringKeyCode)) // Similar to working
         {

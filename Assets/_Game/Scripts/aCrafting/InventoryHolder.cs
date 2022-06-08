@@ -6,7 +6,8 @@ public class InventoryHolder : MonoBehaviour
     private Inventory _inventory;
 
     private void Awake()
-    { 
+    {
+        _inventory = new Inventory();
         CraftingDelegatesContainer.FuncInventoryInstance += GetInventoryInstance;
     }
 

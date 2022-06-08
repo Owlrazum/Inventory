@@ -1,18 +1,19 @@
 using System.Collections;
 using UnityEngine;
 
-public class Item3DRepresentation : MonoBehaviour
+public class Item : MonoBehaviour
 {
     [SerializeField]
     private ItemSO _itemData;
 
     [SerializeField]
-    private float _scaleDownTime;
+    private float _scaleDownTime = 0.5f;
 
     private Vector3 _initialScale;
 
     private Rigidbody _rigidBody;
     private Collider _collider;
+    private Collider _triggerCollider;
 
     private void Awake()
     {
@@ -20,6 +21,7 @@ public class Item3DRepresentation : MonoBehaviour
 
         TryGetComponent(out _rigidBody);
         TryGetComponent(out _collider);
+        transform.GetChild(0).TryGetComponent(out _triggerCollider);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -38,6 +40,7 @@ public class Item3DRepresentation : MonoBehaviour
         inventory.AddItem(_itemData);
         _rigidBody.isKinematic = true;
         _collider.enabled = false;
+        _triggerCollider.enabled = false;
         StartCoroutine(ScaleDown());
     }
 

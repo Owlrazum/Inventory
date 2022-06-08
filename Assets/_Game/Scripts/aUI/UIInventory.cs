@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using TMPro;
+
 [RequireComponent(typeof(Canvas))]
 public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
 {
@@ -13,8 +15,12 @@ public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
     [SerializeField]
     private MultiDimArrayPackage<RectTransform>[] _tilesSerialized;
 
+    [SerializeField]
+    private Dictionary<ItemSO, TextMeshProUGUI> _placedInCanvasItems;
+
     private RectTransform[,] _tiles = null;
 
+    [SerializeField]
     private Inventory _currentInventory;
 
     private Transform _tilesParent;
@@ -72,8 +78,9 @@ public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
 
     private void Awake()
     {
-        _tilesParent = transform.GetChild(0);
-        _itemsParent = transform.GetChild(1);
+        _tilesParent = transform.GetChild(0).GetChild(0);
+        _itemsParent = transform.GetChild(0).GetChild(1);
+
         gameObject.SetActive(false);
         if (_rowCount < 0 || _columnCount < 0)
         {
@@ -81,14 +88,10 @@ public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        _fillState = new bool[_rowCount, _columnCount];
+        _placedInCanvasItems = new Dictionary<ItemSO, TextMeshProUGUI>();
+        _fillState = new bool[_columnCount, _rowCount];
 
         InputDelegatesContainer.EventInventoryCommandTriggered += OnInventoryCommandTriggered;
-    }
-
-    private void Start()
-    {
-        _currentInventory = CraftingDelegatesContainer.QueryInventoryInstance();
     }
 
     private void OnDestroy()
@@ -99,29 +102,75 @@ public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
     // Places items based on topLeftCorner
     private void OnInventoryCommandTriggered()
     {
+        if (gameObject.activeSelf)
+        {
+            HideInventory();
+        }
+        else
+        {
+            ShowInventory();
+        }
+    }
+
+    private void HideInventory()
+    {
+        gameObject.SetActive(false);
+    }
+
+    private void ShowInventory()
+    { 
         gameObject.SetActive(true);
+        _currentInventory = CraftingDelegatesContainer.QueryInventoryInstance();
         var items = _currentInventory.GetItems();
+        print(items.Count);
         foreach (KeyValuePair<ItemSO, int> pair in items)
         {
-            for (int i = 0; i < _rowCount; i++)
+            if (_placedInCanvasItems.ContainsKey(pair.Key))
             {
-                for (int j = 0; j < _columnCount; j++)
+                _placedInCanvasItems[pair.Key].text = pair.Value.ToString();
+                goto outerLoop;
+            }
+            for (int j = 0; j < _rowCount; j++)
+            {
+                for (int i = 0; i < _columnCount; i++)
                 {
+                    print(i + " " + j + " " + _fillState[i, j]);
                     if (!_fillState[i, j])
                     {
-                        if (CheckAndFillIfSizeFits(new Vector2Int(pair.Key.SizeX, pair.Key.SizeY), new Vector2Int(i, j)))
+                        ItemSO item = pair.Key;
+                        if (CheckAndFillIfSizeFits(new Vector2Int(item.SizeX, item.SizeY), new Vector2Int(i, j)))
                         {
-                            GameObject sprite = Instantiate(pair.Key.Sprite, _itemsParent);
+                            GameObject sprite = Instantiate(item.Sprite, _itemsParent);
                             sprite.TryGetComponent(out RectTransform rect);
                             rect.anchorMin = new Vector2(0, 1);
                             rect.anchorMax = new Vector2(0, 1);
-                            rect.pivot = new Vector2(0, 1);
-                            rect.anchoredPosition = _tiles[i, j].anchoredPosition;
-                            // rect.sizeDelta = 
+                            rect.pivot = new Vector2(0.5f, 0.5f);
+                            RectTransform endTile = _tiles[i + item.SizeX - 1, j + item.SizeY - 1];
+                            print((i + item.SizeX - 1) + " " + (j + item.SizeY - 1));
+                            Vector2 adjust = new Vector2(endTile.rect.width, -endTile.rect.height);
+
+                            Vector2 anchPos = (_tiles[i, j].anchoredPosition +
+                                endTile.anchoredPosition + adjust) / 2;
+                            rect.anchoredPosition = anchPos;
+
+                            bool wasTextFound = sprite.transform.GetChild(0)
+                                .TryGetComponent(out TextMeshProUGUI textMeshProUGUI);
+
+                            if (!wasTextFound)
+                            {
+                                Debug.LogError("The sprite for item " + pair.Key + " is missing TextMeshProUGUI in its first child");
+                            }
+
+                            textMeshProUGUI.text = pair.Value.ToString();
+
+                            _placedInCanvasItems.Add(pair.Key, textMeshProUGUI);
+
+                            goto outerLoop;
                         }
                     }
                 }
             }
+            outerLoop:;
         }
     }
 

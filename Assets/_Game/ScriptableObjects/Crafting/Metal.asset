@@ -13,4 +13,7 @@ MonoBehaviour:
   m_Name: Metal
   m_EditorClassIdentifier: 
   ID: 0
+  Sprite: {fileID: 1805491901256972533, guid: acd3dfe025e7242488bdbd4f9553766e, type: 3}
+  SizeX: 2
+  SizeY: 2
   CraftRequirements: []
