@@ -6,9 +6,9 @@ public class ItemSO : ScriptableObject
 {
     public int ID;
 
-    public GameObject Sprite;
-    public int SizeX;
-    public int SizeY;
+    public Sprite Sprite;
+    public Vector2Int Size = Vector2Int.one;
+    public int StackCapacity = 1;
 
     [Serializable]
     public struct CraftRequirement

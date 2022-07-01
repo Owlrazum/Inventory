@@ -1,5 +1,3 @@
-using UnityEngine;
-
 [System.Serializable]
 public struct MultiDimArrayPackage<TElement>
 {
@@ -7,10 +5,10 @@ public struct MultiDimArrayPackage<TElement>
     public int ColumnIndex;
     public TElement Element;
 
-    public MultiDimArrayPackage(int columnIndexArg, int rowIndexArg, TElement element)
+    public MultiDimArrayPackage(int columnIndexArg, int rowIndexArg, TElement elementArg)
     {
         ColumnIndex = columnIndexArg;
         RowIndex = rowIndexArg;
-        Element = element;
+        Element = elementArg;
     }
 }

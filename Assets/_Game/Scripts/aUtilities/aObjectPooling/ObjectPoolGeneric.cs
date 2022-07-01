@@ -30,7 +30,7 @@ public class ObjectPool<TPoolable> where TPoolable : IPoolable
             }
 
             _pool.Enqueue(poolable);
-            gb.transform.parent = _despawnParent;
+            gb.transform.SetParent(_despawnParent, false);
             gb.SetActive(false);
         }
     }
@@ -40,8 +40,8 @@ public class ObjectPool<TPoolable> where TPoolable : IPoolable
         _pool.Clear();
     }
 
-    public TPoolable Spawn(Vector3 pos, Transform parentArg = null)
-    {
+    public TPoolable Spawn(Transform parentArg = null)
+    { 
         if (_pool.Count == 0)
         {
             Extend();
@@ -49,12 +49,18 @@ public class ObjectPool<TPoolable> where TPoolable : IPoolable
 
         TPoolable poolable = _pool.Dequeue();
 
-        poolable.GetTransform().position = pos;
         if (parentArg != null)
         {
             poolable.GetTransform().SetParent(parentArg, false);
         }
 
+        return poolable;
+    }
+
+    public TPoolable Spawn(Vector3 pos, Transform parentArg = null)
+    {
+        TPoolable poolable = Spawn(parentArg);
+        poolable.GetTransform().position = pos;
         return poolable;
     }
 

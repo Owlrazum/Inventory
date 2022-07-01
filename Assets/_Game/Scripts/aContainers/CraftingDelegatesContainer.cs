@@ -3,16 +3,29 @@ using UnityEngine;
 
 public static class CraftingDelegatesContainer
 {
-    public static Func<Inventory> FuncInventoryInstance;
-    public static Inventory QueryInventoryInstance()
+    public static Func<ItemSO, int, bool> FuncNewItemsPlacementIfPossible;
+    public static bool QueryNewItemsPlacementIfPossible(ItemSO itemType, int amount)
     {
 #if UNITY_EDITOR
-        if (FuncInventoryInstance.GetInvocationList().Length != 1)
+        if (FuncNewItemsPlacementIfPossible.GetInvocationList().Length != 1)
         {
             Debug.LogError("There should be only one subscription");
         }
 #endif
 
-        return FuncInventoryInstance?.Invoke();
+        return FuncNewItemsPlacementIfPossible.Invoke(itemType, amount);
+    }
+
+    public static Func<ItemSO, int, bool> FuncCheckIfItemsPresentInInventory;
+    public static bool QueryCheckIfItemsPresentInInventory(ItemSO itemType, int amount)
+    {
+#if UNITY_EDITOR
+        if (FuncCheckIfItemsPresentInInventory.GetInvocationList().Length != 1)
+        {
+            Debug.LogError("There should be only one subscription");
+        }
+#endif
+
+        return FuncCheckIfItemsPresentInInventory.Invoke(itemType, amount);
     }
 }

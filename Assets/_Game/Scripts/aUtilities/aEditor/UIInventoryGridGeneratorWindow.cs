@@ -15,8 +15,6 @@ public class UIInventoryGridGeneratorWindow : EditorWindow
     private Transform _canvasParent;
     private Vector2 _inventoryWindowBorderWidth = new Vector2(5, 10);
 
-    private RectTransform[,] _generatedTiles;
-
     [MenuItem("Window/Custom/GenerateInventoryWindow")]
     private static void Init()
     {
@@ -79,10 +77,10 @@ public class UIInventoryGridGeneratorWindow : EditorWindow
         inventoryWindowRect.anchorMax = Vector2.one * 0.5f;
         inventoryWindowRect.sizeDelta = gridSizeDelta + _inventoryWindowBorderWidth;
         
-        Transform tilesParent = CreateChildOfInventoryWindow("Tiles", inventoryWindow.transform);
-        CreateChildOfInventoryWindow("Items", inventoryWindow.transform);
+        RectTransform tilesParent = CreateChildOfInventoryWindow("Tiles", inventoryWindow.transform);
+        RectTransform itemsParent = CreateChildOfInventoryWindow("Items", inventoryWindow.transform);
 
-        _generatedTiles = new RectTransform[_colCount, _rowCount];
+        UITile[,] generatedTiles = new UITile[_colCount, _rowCount];
         for (int row = 0; row < _rowCount; row++)
         {
             for (int column = 0; column < _colCount; column++)
@@ -95,7 +93,14 @@ public class UIInventoryGridGeneratorWindow : EditorWindow
                 rect.pivot = new Vector2(0, 1);
                 rect.anchoredPosition = tilePos;
 
-                _generatedTiles[column, row] = rect;
+                if (!tileGb.TryGetComponent(out UITile tile))
+                {
+                    Debug.LogError("Tile prefab does not contain UITile");
+                    return;
+                }
+
+                // tile.Rect = rect;
+                generatedTiles[column, row] = tile;
 
                 tilePos += horizDisplacement;
             }
@@ -106,11 +111,12 @@ public class UIInventoryGridGeneratorWindow : EditorWindow
 
         if (canvasGb.TryGetComponent(out UIInventory uiInventory))
         {
-            uiInventory.AssignTiles(_generatedTiles);
+            uiInventory.AssignTiles(generatedTiles, tilesParent, itemsParent);
+            Debug.Log("Assigned tiles");
         }
     }
 
-    private Transform CreateChildOfInventoryWindow(string name, Transform inventoryWindowTransform)
+    private RectTransform CreateChildOfInventoryWindow(string name, Transform inventoryWindowTransform)
     { 
         GameObject gb = new GameObject(name, typeof(RectTransform));
         gb.transform.SetParent(inventoryWindowTransform, false);
@@ -119,6 +125,6 @@ public class UIInventoryGridGeneratorWindow : EditorWindow
         tilesParentRect.anchorMax = Vector2.one;
         tilesParentRect.sizeDelta = -_inventoryWindowBorderWidth;
 
-        return gb.transform;
+        return gb.GetComponent<RectTransform>();
     }
 }

@@ -64,10 +64,10 @@ public class UIInventoryPlaceItemTestWindow : EditorWindow
         rect.anchorMax = new Vector2(0, 1);
         rect.pivot = new Vector2(0.5f, 0.5f);
 
-        RectTransform endTile = tiles[_pos.x + _size.x - 1, _pos.y + _size.y - 1];
+        RectTransform endTile = tiles[_pos.x + _size.x - 1, _pos.y + _size.y - 1].Rect;
         Vector2 adjust = new Vector2(endTile.rect.width, -endTile.rect.height);
 
-        Vector2 anchPos = (tiles[_pos.x, _pos.y].anchoredPosition + 
+        Vector2 anchPos = (tiles[_pos.x, _pos.y].Rect.anchoredPosition + 
             endTile.anchoredPosition + adjust) / 2;
         rect.anchoredPosition = anchPos;
 

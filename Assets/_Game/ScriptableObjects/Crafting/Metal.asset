@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Metal
   m_EditorClassIdentifier: 
   ID: 0
-  Sprite: {fileID: 1805491901256972533, guid: acd3dfe025e7242488bdbd4f9553766e, type: 3}
-  SizeX: 2
-  SizeY: 2
+  Sprite: {fileID: 21300000, guid: 6f70a86719ceb43058d0591060f6f855, type: 3}
+  Size: {x: 1, y: 1}
+  StackCapacity: 1
   CraftRequirements: []

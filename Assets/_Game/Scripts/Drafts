@@ -1,0 +1,145 @@
+/* Inventory delta on show:
+
+Dictionary<ItemSO, List<UIStack>> intersect = new Dictionary<ItemSO, List<UIStack>>(5);
+        Dictionary<ItemSO, int> itemsDelta = null;
+
+        foreach (var pair in itemsData)
+        {
+            if (_itemStacks.ContainsKey(pair.Key))
+            { 
+                int totalItemAmountPresent = 0;
+                foreach (var stack in _itemStacks[pair.Key])
+                {
+                    totalItemAmountPresent += stack.ItemAmount;
+                }
+                if (totalItemAmountPresent != pair.Value)
+                {
+                    if (itemsDelta == null)
+                    {
+                        itemsDelta = new Dictionary<ItemSO, int>();
+                    }
+
+                    itemsDelta.Add(pair.Key, pair.Value - totalItemAmountPresent);
+                }
+                
+                intersect.Add(pair.Key, _itemStacks[pair.Key]);
+                _itemStacks.Remove(pair.Key);
+                itemsData.Remove(pair.Key);
+                continue;
+            }
+        }
+
+        foreach (var delta in _itemStacks)
+        {
+            foreach (var stack in delta.Value)
+            {
+                RemoveStackFromInventory(stack);
+            }
+        }
+
+        foreach (var delta in itemsDelta)
+        {
+            if (delta.Value < 0)
+            {
+                int toRemove = Mathf.Abs(delta.Value);
+                List<UIStack> itemStacks = intersect[delta.Key];
+                int lastStackIndex = itemStacks.Count - 1;
+                while (toRemove > 0)
+                {
+                    if (toRemove >= itemStacks[lastStackIndex].ItemAmount)
+                    {
+                        toRemove -= itemStacks[lastStackIndex].ItemAmount;
+                        RemoveStackFromInventory(itemStacks[lastStackIndex]);
+                        lastStackIndex--;
+                        continue;
+                    }
+
+                    itemStacks[lastStackIndex].ItemAmount -= toRemove;
+                }
+                itemsDelta.Remove(delta.Key);
+            }
+        }
+
+        foreach (var delta in itemsDelta)
+        {
+            int toAdd = delta.Value;
+            List<UIStack> itemStacks = intersect[delta.Key];
+            int itemCapacity = delta.Key.StackCapacity;
+            int stackIndex = 0;
+            while (toAdd > 0)
+            {
+                if (stackIndex >= itemStacks.Count)
+                {
+                    if (itemCapacity < toAdd)
+                    { 
+                        AddStackToInventory(delta.Key, itemCapacity);
+                        toAdd -= itemCapacity;
+                    }
+                    else
+                    {
+                        AddStackToInventory(delta.Key, toAdd);
+                        toAdd = 0;
+                    }
+                    stackIndex++;
+                }
+                
+                UIStack currentStack = itemStacks[stackIndex++];
+                int deltaAmount =  itemCapacity - currentStack.ItemAmount;
+                if (deltaAmount > 0)
+                {
+                    if (deltaAmount < toAdd)
+                    { 
+                        toAdd -= deltaAmount;
+                        currentStack.ItemAmount += deltaAmount;
+                    }
+                    else
+                    {
+                        currentStack.ItemAmount += toAdd;
+                        toAdd = 0;
+                    }
+                }
+            }
+        }
+
+        foreach (var pair in _itemStacks)
+        {
+            ItemSO item = pair.Key;
+            if (CheckAndFillIfSizeFits(new Vector2Int(item.Size.x, item.Size.y), new Vector2Int(i, j)))
+            {
+                GameObject sprite = Instantiate(item.Sprite, _itemsParent);
+                sprite.TryGetComponent(out RectTransform rect);
+                
+                rect.anchoredPosition = anchPos;
+
+                goto outerLoop;
+            }
+        outerLoop:;
+        }
+
+
+    private void AddStackToInventory(ItemSO itemType, int itemAmount)
+    {
+        UIStack uiStack = PoolingDelegatesContainer.FuncSpawnUIStack();
+        uiStack.InitializeWithItemType(itemType, itemAmount);
+
+        for (int j = 0; j < _tiles.GetLength(1); j++)
+        {
+            for (int i = 0; i < _tiles.GetLength(0); i++)
+            {
+                Vector2Int tilePos = new Vector2Int(i, j);
+                if (CheckIfSizeFits(uiStack.ItemType.Size, tilePos))
+                {
+                    FillTiles(uiStack, tilePos);
+                    uiStack.AssignReferences(_itemsParent, _graphicRaycaster);
+
+                    RectTransform endTile = _tiles[i + itemType.Size.x - 1, j + itemType.Size.y - 1].Rect;
+                    Vector2 adjust = new Vector2(endTile.rect.width, -endTile.rect.height);
+
+                    Vector2 anchPos = (_tiles[i, j].Rect.anchoredPosition +
+                    endTile.anchoredPosition + adjust) / 2;
+                    uiStack.UpdatePos(tilePos, anchPos);
+                }
+            }
+        }
+    }
+*/

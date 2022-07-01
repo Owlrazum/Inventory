@@ -5,6 +5,7 @@ public class PlayerCharacter : MonoBehaviour
     protected void Awake()
     {
         PlayerQueriesContainer.FuncTransform += GetTransform;
+        PlayerQueriesContainer.QueryTransform();
         PlayerQueriesContainer.FuncPlayerCharacterInstance += GetPlayerCharacterInstance;
     }
 

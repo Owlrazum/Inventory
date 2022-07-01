@@ -1,104 +1,141 @@
 using System.Collections.Generic;
 using UnityEngine;
-
-using TMPro;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Canvas))]
+[RequireComponent(typeof(GraphicRaycaster))]
 public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
 {
     [SerializeField]
-    private int _rowCount = -1;
+    private Vector2Int _tilesSize;
 
     [SerializeField]
-    private int _columnCount = -1;
+    private MultiDimArrayPackage<UITile>[] _tilesSerialized;
 
     [SerializeField]
-    private MultiDimArrayPackage<RectTransform>[] _tilesSerialized;
+    private DictionaryPackage<ItemSO, List<UIStack>>[] _stacksSerialized;
 
     [SerializeField]
-    private Dictionary<ItemSO, TextMeshProUGUI> _placedInCanvasItems;
-
-    private RectTransform[,] _tiles = null;
-
+    private RectTransform _tilesParent;
     [SerializeField]
-    private Inventory _currentInventory;
+    private RectTransform _itemsParent;
 
-    private Transform _tilesParent;
-    private Transform _itemsParent;
+    private GraphicRaycaster _graphicRaycaster;
 
-    private bool[,] _fillState;
-
+    private UITile[,] _tiles;
+    private Dictionary<ItemSO, List<UIStack>> _itemStacks;
+    
+    #region Editor
 #if UNITY_EDITOR
-    public void AssignTiles(RectTransform[,] tilesArg)
+    public void AssignTiles(
+        UITile[,] tilesArg, 
+        RectTransform tilesParentArg,
+        RectTransform itemsParentArg)
     {
         _tiles = tilesArg;
-        _columnCount = _tiles.GetLength(0);
-        _rowCount = _tiles.GetLength(1);
+        _tilesSize = new Vector2Int(_tiles.GetLength(0), _tiles.GetLength(1));
+        _tilesParent = tilesParentArg;
+        _itemsParent = itemsParentArg;
     }
 
-    public RectTransform[,] GetTiles()
+    public UITile[,] GetTiles()
     {
         OnAfterDeserialize();
         return _tiles;
     }
 #endif
+    #endregion
 
+    #region Serialization
     public void OnBeforeSerialize()
     {
         if (_tiles == null)
         {
+            Debug.Log("Not serializing tiles");
             return;
         }
 
-        // Convert our unserializable array into a serializable list
-        _tilesSerialized = new MultiDimArrayPackage<RectTransform>[_tiles.GetLength(0) * _tiles.GetLength(1)];
-        for (int j = 0; j < _tiles.GetLength(1); j++)
+        int tilesLength = _tilesSize.x * _tilesSize.y;
+        _tilesSerialized = new MultiDimArrayPackage<UITile>[tilesLength];
+        for (int j = 0; j < _tilesSize.y; j++)
         {
-            for (int i = 0; i < _tiles.GetLength(0); i++)
+            for (int i = 0; i < _tilesSize.x; i++)
             {
-                _tilesSerialized[j * _tiles.GetLength(0) + i] = 
-                    (new MultiDimArrayPackage<RectTransform>(i, j, _tiles[i, j]));
+                _tilesSerialized[j * _tilesSize.x + i] = 
+                    (new MultiDimArrayPackage<UITile>(i, j, _tiles[i, j]));
             }
+        }
+
+        if (_itemStacks == null)
+        {
+            return;
+        }
+
+        _stacksSerialized = new DictionaryPackage<ItemSO, List<UIStack>>[_itemStacks.Count];
+        int indexer = 0;
+        foreach(var pair in _itemStacks)
+        {
+            _stacksSerialized[indexer++] = new DictionaryPackage<ItemSO, List<UIStack>>(pair.Key, pair.Value);
         }
     }
 
     public void OnAfterDeserialize()
     {
-        if (_tilesSerialized == null)
+        if (_tilesSerialized[0].Element == null)
         {
+            Debug.Log("No Deserialize!");
             return;
         }
-        _tiles = new RectTransform[_columnCount, _rowCount];
+
+        _tiles = new UITile[_tilesSize.x, _tilesSize.y];
         foreach(var package in _tilesSerialized)
         {
             _tiles[package.ColumnIndex, package.RowIndex] = package.Element;
         }
-    }
 
-
-    private void Awake()
-    {
-        _tilesParent = transform.GetChild(0).GetChild(0);
-        _itemsParent = transform.GetChild(0).GetChild(1);
-
-        gameObject.SetActive(false);
-        if (_rowCount < 0 || _columnCount < 0)
+        _itemStacks = new Dictionary<ItemSO, List<UIStack>>();
+        if (_stacksSerialized == null)
         {
-            Debug.LogError(name + ": Assign valid values for dimensions");
             return;
         }
 
-        _placedInCanvasItems = new Dictionary<ItemSO, TextMeshProUGUI>();
-        _fillState = new bool[_columnCount, _rowCount];
+        foreach(var element in _stacksSerialized)
+        {
+            _itemStacks.Add(element.Key, element.Value);
+        }
+    }
+    #endregion
+
+    private void Awake()
+    {
+        TryGetComponent(out _graphicRaycaster);
+        gameObject.SetActive(false);
+        if (_tiles == null)
+        {
+            Debug.LogError("You should generate an inventory through window InventoryGeneratorWindow");
+            return;
+        }
+
+        if (_itemStacks == null)
+        {
+            _itemStacks = new Dictionary<ItemSO, List<UIStack>>();
+        }
+
+        CraftingDelegatesContainer.FuncNewItemsPlacementIfPossible += OnNewItemsPlacementIfPossible;
+        //CraftingDelegatesContainer.EventInventoryUpdate += OnInventoryUpdate;
 
         InputDelegatesContainer.EventInventoryCommandTriggered += OnInventoryCommandTriggered;
     }
 
     private void OnDestroy()
     { 
+        CraftingDelegatesContainer.FuncNewItemsPlacementIfPossible -= OnNewItemsPlacementIfPossible;
+        //CraftingDelegatesContainer.EventInventoryUpdate -= OnInventoryUpdate;
+
         InputDelegatesContainer.EventInventoryCommandTriggered -= OnInventoryCommandTriggered;
     }
 
+    #region InvenotoryDisplay
     // Places items based on topLeftCorner
     private void OnInventoryCommandTriggered()
     {
@@ -120,89 +157,160 @@ public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
     private void ShowInventory()
     { 
         gameObject.SetActive(true);
-        _currentInventory = CraftingDelegatesContainer.QueryInventoryInstance();
-        var items = _currentInventory.GetItems();
-        print(items.Count);
-        foreach (KeyValuePair<ItemSO, int> pair in items)
+    }
+    #endregion
+
+    private bool OnNewItemsPlacementIfPossible(ItemSO itemType, int amount)
+    {
+        // TODO add and if no more possible, revert and return false
+        int predictionAmount = amount;
+        int stackMaxSize = itemType.StackCapacity;
+        if (_itemStacks.ContainsKey(itemType))
         {
-            if (_placedInCanvasItems.ContainsKey(pair.Key))
+            foreach (UIStack stack in _itemStacks[itemType])
             {
-                _placedInCanvasItems[pair.Key].text = pair.Value.ToString();
-                goto outerLoop;
-            }
-            for (int j = 0; j < _rowCount; j++)
-            {
-                for (int i = 0; i < _columnCount; i++)
+                if (stack.ItemAmount < stackMaxSize)
                 {
-                    print(i + " " + j + " " + _fillState[i, j]);
-                    if (!_fillState[i, j])
+                    int delta = stackMaxSize - stack.ItemAmount;
+                    if (delta < predictionAmount)
                     {
-                        ItemSO item = pair.Key;
-                        if (CheckAndFillIfSizeFits(new Vector2Int(item.SizeX, item.SizeY), new Vector2Int(i, j)))
-                        {
-                            GameObject sprite = Instantiate(item.Sprite, _itemsParent);
-                            sprite.TryGetComponent(out RectTransform rect);
-                            rect.anchorMin = new Vector2(0, 1);
-                            rect.anchorMax = new Vector2(0, 1);
-                            rect.pivot = new Vector2(0.5f, 0.5f);
-                            RectTransform endTile = _tiles[i + item.SizeX - 1, j + item.SizeY - 1];
-                            print((i + item.SizeX - 1) + " " + (j + item.SizeY - 1));
-                            Vector2 adjust = new Vector2(endTile.rect.width, -endTile.rect.height);
-
-                            Vector2 anchPos = (_tiles[i, j].anchoredPosition +
-                                endTile.anchoredPosition + adjust) / 2;
-                            rect.anchoredPosition = anchPos;
-
-                            bool wasTextFound = sprite.transform.GetChild(0)
-                                .TryGetComponent(out TextMeshProUGUI textMeshProUGUI);
-
-                            if (!wasTextFound)
-                            {
-                                Debug.LogError("The sprite for item " + pair.Key + " is missing TextMeshProUGUI in its first child");
-                            }
-
-                            textMeshProUGUI.text = pair.Value.ToString();
-
-                            _placedInCanvasItems.Add(pair.Key, textMeshProUGUI);
-
-                            goto outerLoop;
-                        }
+                        predictionAmount -= delta;
+                    }
+                    else
+                    {
+                        goto Placement;
                     }
                 }
             }
-            outerLoop:;
         }
-    }
 
-    /// <returns>Whether placed</returns>
-    private bool CheckAndFillIfSizeFits(Vector2Int size, Vector2Int pos)
-    {
-        for (int i = 0; i < size.x; i++)
+        List<UIStack> addedStacks = new List<UIStack>();
+        for (int j = 0; j < _tiles.GetLength(1); j++)
         {
-            for (int j = 0; j < size.y; j++)
+            for (int i = 0; i < _tiles.GetLength(0); i++)
             {
-                Vector2Int tile = new Vector2Int(pos.x + i, pos.y + j);
-                if (tile.x >= _fillState.GetLength(0) ||
-                    tile.y >= _fillState.GetLength(1))
+                Vector2Int tilePos = new Vector2Int(i, j);
+                if (CheckIfSizeFits(itemType.Size, tilePos))
                 {
-                    return false;
-                }
-
-                if (_fillState[tile.x, tile.y])
-                {
-                    return false;
+                    if (predictionAmount > itemType.StackCapacity)
+                    {
+                        predictionAmount -= itemType.StackCapacity;
+                        var uiStack = AddStackToInventory(itemType, itemType.StackCapacity, tilePos);
+                        addedStacks.Add(uiStack);
+                    }
+                    else
+                    {
+                        var uiStack = AddStackToInventory(itemType, predictionAmount, tilePos);
+                        addedStacks.Add(uiStack);
+                        goto Placement;
+                    }
                 }
             }
         }
 
+        // We have not found a straight way to place item in inventory;
+        foreach (var stack in addedStacks)
+        {
+            RemoveStackFromInventory(stack);
+        }
+        return false;
+
+    Placement:
+        if (_itemStacks.ContainsKey(itemType))
+        {
+            foreach (UIStack stack in _itemStacks[itemType])
+            {
+                if (stack.ItemAmount < stackMaxSize)
+                {
+                    int delta = stackMaxSize - stack.ItemAmount;
+                    if (delta < amount)
+                    {
+                        amount -= delta;
+                        stack.ItemAmount = stackMaxSize;
+                    }
+                    else
+                    {
+                        stack.ItemAmount += delta;
+                        break;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    private bool CheckIfSizeFits(Vector2Int size, Vector2Int pos)
+    { 
         for (int i = 0; i < size.x; i++)
         {
             for (int j = 0; j < size.y; j++)
             {
-                _fillState[pos.x + i, pos.y + j] = true;
+                Vector2Int tileIndex = new Vector2Int(pos.x + i, pos.y + j);
+                if (tileIndex.x >= _tiles.GetLength(0) ||
+                    tileIndex.y >= _tiles.GetLength(1))
+                {
+                    return false;
+                }
+
+                if (_tiles == null)
+                {
+                    Debug.LogError("Tiles are null");
+                    return false;
+                }
+
+                if (_tiles[tileIndex.x, tileIndex.y] == null)
+                {
+                    Debug.LogError("tile is null");
+                    return false;
+                }
+
+                if (_tiles[tileIndex.x, tileIndex.y].PlacedStack != null)
+                {
+                    return false;
+                }
             }
         }
 
         return true;
+    }
+
+    private UIStack AddStackToInventory(ItemSO itemType, int itemAmount, Vector2Int tilePos)
+    {
+        UIStack uiStack = PoolingDelegatesContainer.FuncSpawnUIStack();
+        uiStack.InitializeWithItemType(itemType, itemAmount);
+        uiStack.AssignReferences(_itemsParent, _graphicRaycaster);
+
+        FillTiles(uiStack, tilePos);
+
+        RectTransform endTile = _tiles[tilePos.x + itemType.Size.x - 1, tilePos.y + itemType.Size.y - 1].Rect;
+        Vector2 adjust = new Vector2(endTile.rect.width, -endTile.rect.height);
+
+        Vector2 anchPos = 
+            (_tiles[tilePos.x, tilePos.y].Rect.anchoredPosition +
+            endTile.anchoredPosition + adjust) / 2;
+
+        uiStack.UpdatePos(tilePos, anchPos);
+
+        return uiStack;
+    }
+
+    private void FillTiles(UIStack stack, Vector2Int pos)
+    { 
+        for (int i = 0; i < stack.ItemType.Size.x; i++)
+        {
+            for (int j = 0; j < stack.ItemType.Size.y; j++)
+            {
+                _tiles[pos.x + i, pos.y + j].PlacedStack = stack;
+            }
+        }
+    }
+
+    private void RemoveStackFromInventory(UIStack stack)
+    { 
+        foreach (Vector2Int toFree in stack.GetFillState())
+        {
+            _tiles[toFree.x, toFree.y].PlacedStack = null;
+        }
+        stack.Despawn();
     }
 }

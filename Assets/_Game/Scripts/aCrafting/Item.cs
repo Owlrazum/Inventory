@@ -7,6 +7,9 @@ public class Item : MonoBehaviour
     private ItemSO _itemData;
 
     [SerializeField]
+    private int _amount;
+
+    [SerializeField]
     private float _scaleDownTime = 0.5f;
 
     private Vector3 _initialScale;
@@ -31,13 +34,17 @@ public class Item : MonoBehaviour
             return;
         }
 
-        if (!other.TryGetComponent(out InventoryHolder inventory))
+        if (!other.TryGetComponent(out PlayerInventoryHolder inventory))
         {
             Debug.LogError("Player does not have inventory");
             return;
         }
 
-        inventory.AddItem(_itemData);
+        if (!CraftingDelegatesContainer.FuncNewItemsPlacementIfPossible(_itemData, _amount))
+        {
+            return;
+        }
+
         _rigidBody.isKinematic = true;
         _collider.enabled = false;
         _triggerCollider.enabled = false;

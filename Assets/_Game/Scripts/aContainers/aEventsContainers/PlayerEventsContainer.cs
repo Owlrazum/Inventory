@@ -13,9 +13,8 @@ public static class PlayerEventsContainer
     public static Action<Collider> EventPlayerOnTriggerEnter;
     public static Action<Collider> EventPlayerOnTriggerStay;
     public static Action<Collider> EventPlayerOnTriggerExit;
-    
+
     // public static Action<PuzzleItem> EventPuzzleItemTriggerEnter;
     // public static Action<PuzzleItem> EventPuzzleItemTriggerExit;
     #endregion
-
 }
