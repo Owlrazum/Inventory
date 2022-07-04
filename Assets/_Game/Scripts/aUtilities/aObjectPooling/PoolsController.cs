@@ -18,7 +18,8 @@ public class PoolsController : MonoBehaviour
     {
         _stacksPool = new ObjectPool<UIStack>(
             _uiStackPrefab.gameObject, 
-            _despawnedStacksParent
+            _despawnedStacksParent,
+            10
         );
 
         PoolingDelegatesContainer.FuncSpawnUIStack += SpawnUIStack;

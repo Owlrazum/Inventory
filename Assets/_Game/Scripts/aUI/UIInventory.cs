@@ -21,6 +21,9 @@ public class UIInventory : MonoBehaviour
     private RectTransform _itemsParent;
 
     [SerializeField]
+    private bool _shouldEmptyInventoryOnStart; 
+
+    [SerializeField]
     private UITile[] _tiles;
 
     private Dictionary<int, List<UIStack>> _itemStacks;
@@ -65,6 +68,11 @@ public class UIInventory : MonoBehaviour
             Debug.LogError("You should generate an inventory through window InventoryGeneratorWindow");
             return;
         }
+
+        if (_shouldEmptyInventoryOnStart)
+        {
+            SaveSystem.EmptyInventoryData();
+        }
 #endif
 
         TryGetComponent(out _canvas);
@@ -83,7 +91,22 @@ public class UIInventory : MonoBehaviour
     private void Start()
     {
         _itemStacks = new Dictionary<int, List<UIStack>>();
-        //TODO intiiaize
+        var data = SaveSystem.LoadInvenoryData();
+        if (data == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < data.items.Count; i++)
+        {
+            List<UIStack> stacks = new List<UIStack>();
+            for (int j = 0; j < data.stacksData[i].Count; j++)
+            { 
+                UIStack stack = AddStackToInventory(data.stacksData[i][j]);
+                stacks.Add(stack);
+            }
+            _itemStacks.Add(data.items[i], stacks);
+        }
     }
 
     private void OnDestroy()
@@ -307,5 +330,10 @@ public class UIInventory : MonoBehaviour
     private int TileIndex(Vector2Int xy)
     {
         return xy.y * _tilesResolution.x + xy.x;
+    }
+
+    private void OnApplicationQuit()
+    {
+        SaveSystem.SaveInventoryState(_itemStacks);
     }
 }

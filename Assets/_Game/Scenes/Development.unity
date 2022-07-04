@@ -183,6 +183,7 @@ MonoBehaviour:
   _gridSizeDelta: {x: 800, y: 500}
   _tilesParent: {fileID: 1264742712}
   _itemsParent: {fileID: 1772551792}
+  _shouldEmptyInventoryOnStart: 1
   _tiles:
   - {fileID: 1217916850}
   - {fileID: 1927689932}

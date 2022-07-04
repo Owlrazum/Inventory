@@ -7,26 +7,58 @@ using UnityEngine;
 public class InventoryData
 {
     public List<int> items;
-    public List<List<UIStackData>> stacks;
+    public List<StackDataListWrapper> stacksData;
+}
+
+[Serializable]
+public class StackDataListWrapper
+{
+    public List<UIStackData> stacksData;
+    public StackDataListWrapper(List<UIStackData> stacksDataArg)
+    {
+        stacksData = stacksDataArg;
+    }
+
+    public int Count
+    {
+        get { return stacksData.Count; }
+    }
+
+    public UIStackData this[int key]
+    {
+        get
+        {
+            return stacksData[key];
+        }
+        set
+        {
+            stacksData[key] = value;
+        }
+    }
+
+    public void Add(UIStackData data)
+    {
+        stacksData.Add(data);
+    }
 }
 
 public class SaveSystem
 {
     private const string INVENTORY_PATH = "inventory.txt";
 
-    public static void SaveInventoryState(Dictionary<ItemSO, List<UIStack>> inventoryItems)
+    public static void SaveInventoryState(Dictionary<int, List<UIStack>> inventoryItems)
     {
         InventoryData data = new InventoryData();
         data.items = new List<int>(inventoryItems.Count);
-        data.stacks = new List<List<UIStackData>>(inventoryItems.Count);
+        data.stacksData = new List<StackDataListWrapper>(inventoryItems.Count);
         int stackCounter = 0;
         foreach (var pair in inventoryItems)
         {
-            data.items.Add(pair.Key.ID);
-            data.stacks.Add(new List<UIStackData>());
+            data.items.Add(pair.Key);
+            data.stacksData.Add(new StackDataListWrapper(new List<UIStackData>()));
             foreach (var uiStack in pair.Value)
             {
-                data.stacks[stackCounter].Add(uiStack.StackData);
+                data.stacksData[stackCounter].Add(uiStack.StackData);
             }
             stackCounter++;
         }
@@ -46,5 +78,10 @@ public class SaveSystem
         var data = JsonUtility.FromJson<InventoryData>(jsonString);
 
         return data;
+    }
+
+    public static void EmptyInventoryData()
+    { 
+        File.WriteAllText(Application.persistentDataPath + INVENTORY_PATH, "");
     }
 }
