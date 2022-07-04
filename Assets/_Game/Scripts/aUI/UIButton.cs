@@ -1,22 +1,25 @@
 using System;
 
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
+using SNG.UI;
 
-public class UIButton : Selectable, IPointerClickHandler
+[RequireComponent(typeof(RectTransform))]
+public class UIButton : MonoBehaviour, IPointerClickHandler
 {
-    public virtual void OnPointerClick(PointerEventData eventData)
+    private RectTransform _rect;
+    public RectTransform Rect { get { return _rect; } }
+    
+    private void Awake()
     {
-        if (eventData.button != PointerEventData.InputButton.Left)
-        { 
-            return;
-        }
-
-        OnClick();
+        TryGetComponent(out _rect);
     }
 
-    protected virtual void OnClick()
+    private void Start()
+    {
+        UIQueriesContainer.QueryGetUpdater().AddPointerClickHandler(this);
+    }
+
+    public virtual void OnPointerClick(MouseButtonType pressedButton)
     {
         EventOnClick?.Invoke();
     }

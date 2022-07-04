@@ -90,6 +90,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a05804158e8c43a49c04bbb192846c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _pickUpDelta: {x: 0, y: 40}
 --- !u!1001 &9107818034757077632
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -46,19 +46,19 @@ public class SaveSystem
 {
     private const string INVENTORY_PATH = "inventory.txt";
 
-    public static void SaveInventoryState(Dictionary<int, List<UIStack>> inventoryItems)
+    public static void SaveInventoryState(Dictionary<int, Dictionary<int, UIStack>> inventoryItems)
     {
         InventoryData data = new InventoryData();
         data.items = new List<int>(inventoryItems.Count);
         data.stacksData = new List<StackDataListWrapper>(inventoryItems.Count);
         int stackCounter = 0;
-        foreach (var pair in inventoryItems)
+        foreach (var itemStackPair in inventoryItems)
         {
-            data.items.Add(pair.Key);
+            data.items.Add(itemStackPair.Key);
             data.stacksData.Add(new StackDataListWrapper(new List<UIStackData>()));
-            foreach (var uiStack in pair.Value)
+            foreach (var uiStackPair in itemStackPair.Value)
             {
-                data.stacksData[stackCounter].Add(uiStack.StackData);
+                data.stacksData[stackCounter].Add(uiStackPair.Value.StackData);
             }
             stackCounter++;
         }

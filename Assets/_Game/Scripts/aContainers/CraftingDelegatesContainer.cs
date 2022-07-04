@@ -16,6 +16,38 @@ public static class CraftingDelegatesContainer
         return FuncGetItemSO.Invoke(id);
     }
 
+    public static Action<UITile> EventTileUnderPointerCame;
+    public static Action EventTileUnderPointerGone;
+
+    public static Action<UIStack> EventStackWasSelected;
+    public static Func<bool> FuncIsStackSelected;
+    public static bool QueryIsStackSelected()
+    { 
+#if UNITY_EDITOR
+        if (FuncIsStackSelected.GetInvocationList().Length != 1)
+        {
+            Debug.LogError("There should be only one subscription");
+        }
+#endif
+
+        return FuncIsStackSelected.Invoke();
+    }
+
+    public static Func<bool> FuncIsStackPlaceableOnTileUnderPointer;
+    public static bool QueryIsStackPlaceableOnTileUnderPointer()
+    {
+#if UNITY_EDITOR
+        if (FuncIsStackPlaceableOnTileUnderPointer.GetInvocationList().Length != 1)
+        {
+            Debug.LogError("There should be only one subscription");
+        }
+#endif
+
+        return FuncIsStackPlaceableOnTileUnderPointer.Invoke();
+    }
+
+    public static Action<UIStack> EventStackPlacementUnderPointer;
+
     public static Func<ItemSO, int, bool> FuncNewItemsPlacementIfPossible;
     public static bool QueryNewItemsPlacementIfPossible(ItemSO itemType, int amount)
     {

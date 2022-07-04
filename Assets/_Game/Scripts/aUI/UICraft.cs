@@ -19,7 +19,7 @@ public class UICraft : MonoBehaviour
         transform.GetChild(1).TryGetComponent(out _selectButton);
 
         _selectButton.EventOnClick += OnItemSelect;
-        _craftButton.interactable = true;
+        // _craftButton.interactable = true;
     }
 
     private void OnDestroy()
@@ -31,7 +31,7 @@ public class UICraft : MonoBehaviour
     private void OnItemSelect()
     { 
         _craftButton.EventOnClick += OnCraftApproved;
-        _craftButton.interactable = true;
+        // _craftButton.interactable = true;
     }
 
     private void OnCraftApproved()

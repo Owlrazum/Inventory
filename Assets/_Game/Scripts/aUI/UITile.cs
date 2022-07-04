@@ -1,12 +1,11 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using SNG.UI;
 
 [RequireComponent(typeof(RectTransform))]
-public class UITile : MonoBehaviour, IPointerClickHandler
+[RequireComponent(typeof(Image))]
+public class UITile : MonoBehaviour, IPointerEnterExitHandler
 {
-    [SerializeField]
-    private int cc;
-
     [SerializeField]
     private UIStack _placedStack;
     public UIStack PlacedStack
@@ -22,13 +21,43 @@ public class UITile : MonoBehaviour, IPointerClickHandler
         get { return _rect; }
     }
 
+    [SerializeField]
+    private Sprite _activeSprite;
+
+    [SerializeField]
+    private Sprite _defaultSprite;
+
+    private Image _image;
+
     private void Awake()
     {
         TryGetComponent(out _rect);
+        TryGetComponent(out _image);
     }
 
-    public void OnPointerClick(PointerEventData eventData)
-    { 
+    private void Start()
+    {
+        var updater = UIQueriesContainer.QueryGetUpdater();
+        updater.AddPointerEnterExitHandler(this);
+    }
 
+    public void OnPointerEnter()
+    {
+        if (_placedStack == null)
+        {
+            return;
+        }
+
+        _image.sprite = _activeSprite;
+    }
+
+    public void OnPointerExit()
+    {
+        if (_placedStack == null)
+        {
+            return;
+        }
+
+        _image.sprite = _defaultSprite;
     }
 }

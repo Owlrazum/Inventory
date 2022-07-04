@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 [RequireComponent(typeof(Canvas))]
-[RequireComponent(typeof(GraphicRaycaster))]
 public class UIInventory : MonoBehaviour
 {
     [SerializeField]
@@ -26,12 +24,15 @@ public class UIInventory : MonoBehaviour
     [SerializeField]
     private UITile[] _tiles;
 
-    private Dictionary<int, List<UIStack>> _itemStacks;
-    
-    private CanvasDataType _canvasData;
+    private Dictionary<int, Dictionary<int, UIStack>> _itemStacks;
+
+    private HashSet<int> _inventoryTiles;
+
     private Canvas _canvas;
-    
-    
+
+    private UITile _tileUnderPointer;
+
+
     #region Editor
 #if UNITY_EDITOR
     public void AssignTiles(
@@ -78,19 +79,48 @@ public class UIInventory : MonoBehaviour
         TryGetComponent(out _canvas);
         _canvas.enabled = false;
 
-        _canvasData = new CanvasDataType();
-        TryGetComponent(out _canvasData.GraphicRaycaster);
-        _canvasData.BoundingRect = _itemsParent;
+        _inventoryTiles = new HashSet<int>();
+        for (int i = 0; i < _tiles.Length; i++)
+        {
+            _inventoryTiles.Add(_tiles[i].GetInstanceID());
+        }
 
+        Subscribe();
+    }
+
+    private void Subscribe()
+    { 
         CraftingDelegatesContainer.FuncNewItemsPlacementIfPossible += OnNewItemsPlacementIfPossible;
-        //CraftingDelegatesContainer.EventInventoryUpdate += OnInventoryUpdate;
+        
+        CraftingDelegatesContainer.EventTileUnderPointerCame += OnTileUnderPointerCame;
+        CraftingDelegatesContainer.EventTileUnderPointerGone += OnTileUnderPointerGone;
+
+        CraftingDelegatesContainer.EventStackWasSelected += OnStackWasSelected;
+
+        CraftingDelegatesContainer.FuncIsStackPlaceableOnTileUnderPointer += IsStackPlaceableOnTileUnderPointer;
+        CraftingDelegatesContainer.EventStackPlacementUnderPointer += OnStackPlacementUnderPointer;
 
         InputDelegatesContainer.EventInventoryCommandTriggered += OnInventoryCommandTriggered;
     }
 
+    private void OnDestroy()
+    { 
+        CraftingDelegatesContainer.FuncNewItemsPlacementIfPossible -= OnNewItemsPlacementIfPossible;
+        
+        CraftingDelegatesContainer.EventTileUnderPointerCame -= OnTileUnderPointerCame;
+        CraftingDelegatesContainer.EventTileUnderPointerGone -= OnTileUnderPointerGone;
+
+        CraftingDelegatesContainer.EventStackWasSelected -= OnStackWasSelected;
+
+        CraftingDelegatesContainer.FuncIsStackPlaceableOnTileUnderPointer -= IsStackPlaceableOnTileUnderPointer;
+        CraftingDelegatesContainer.EventStackPlacementUnderPointer -= OnStackPlacementUnderPointer;
+
+        InputDelegatesContainer.EventInventoryCommandTriggered -= OnInventoryCommandTriggered;
+    }
+
     private void Start()
     {
-        _itemStacks = new Dictionary<int, List<UIStack>>();
+        _itemStacks = new Dictionary<int, Dictionary<int, UIStack>>();
         var data = SaveSystem.LoadInvenoryData();
         if (data == null)
         {
@@ -99,22 +129,54 @@ public class UIInventory : MonoBehaviour
 
         for (int i = 0; i < data.items.Count; i++)
         {
-            List<UIStack> stacks = new List<UIStack>();
+            Dictionary<int, UIStack> stacks = new Dictionary<int, UIStack>();
             for (int j = 0; j < data.stacksData[i].Count; j++)
             { 
                 UIStack stack = AddStackToInventory(data.stacksData[i][j]);
-                stacks.Add(stack);
+                stacks.Add(stack.GetInstanceID(), stack);
             }
             _itemStacks.Add(data.items[i], stacks);
         }
     }
 
-    private void OnDestroy()
-    { 
-        CraftingDelegatesContainer.FuncNewItemsPlacementIfPossible -= OnNewItemsPlacementIfPossible;
-        //CraftingDelegatesContainer.EventInventoryUpdate -= OnInventoryUpdate;
 
-        InputDelegatesContainer.EventInventoryCommandTriggered -= OnInventoryCommandTriggered;
+    private void OnTileUnderPointerCame(UITile tile)
+    {
+        if (!CheckIfTileInInventory(tile))
+        {
+            return;
+        }
+
+        _tileUnderPointer = tile;
+    }
+
+    private void OnTileUnderPointerGone()
+    {
+        _tileUnderPointer = null;
+    }
+
+    private void OnStackWasSelected(UIStack stack)
+    {
+        var fillState = stack.GetFillState();
+    }
+
+    private bool IsStackPlaceableOnTileUnderPointer()
+    {
+        if (_tileUnderPointer == null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void OnStackPlacementUnderPointer(UIStack stack)
+    {
+        if (_tileUnderPointer == null)
+        {
+            return;
+        }
+
     }
 
     #region InvenotoryDisplay
@@ -144,16 +206,16 @@ public class UIInventory : MonoBehaviour
 
     private bool OnNewItemsPlacementIfPossible(ItemSO itemType, int amount)
     {
-        // TODO add and if no more possible, revert and return false
         int predictionAmount = amount;
         int stackMaxSize = itemType.StackCapacity;
 
-        List<UIStack> addedStacks = new List<UIStack>();
+        Dictionary<int, UIStack> addedStacks = new Dictionary<int, UIStack>();
 
         if (_itemStacks.ContainsKey(itemType.ID))
         {
-            foreach (UIStack stack in _itemStacks[itemType.ID])
+            foreach (var pair in _itemStacks[itemType.ID])
             {
+                UIStack stack = pair.Value;
                 if (stack.StackData.ItemAmount < stackMaxSize)
                 {
                     int delta = stackMaxSize - stack.StackData.ItemAmount;
@@ -181,12 +243,12 @@ public class UIInventory : MonoBehaviour
                     {
                         predictionAmount -= itemType.StackCapacity;
                         var uiStack = AddStackToInventory(itemType, itemType.StackCapacity, tilePos);
-                        addedStacks.Add(uiStack);
+                        addedStacks.Add(uiStack.GetInstanceID(), uiStack);
                     }
                     else
                     {
                         var uiStack = AddStackToInventory(itemType, predictionAmount, tilePos);
-                        addedStacks.Add(uiStack);
+                        addedStacks.Add(uiStack.GetInstanceID(), uiStack);
                         goto Placement;
                     }
                 }
@@ -194,17 +256,18 @@ public class UIInventory : MonoBehaviour
         }
 
         // We have not found a straight way to place item in inventory;
-        foreach (var stack in addedStacks)
+        foreach (var pair in addedStacks)
         {
-            RemoveStackFromInventory(stack);
+            DeleteAddedStack(pair.Value);
         }
         return false;
 
     Placement:
         if (_itemStacks.ContainsKey(itemType.ID))
         {
-            foreach (UIStack stack in _itemStacks[itemType.ID])
+            foreach (var pair in _itemStacks[itemType.ID])
             {
+                UIStack stack = pair.Value;
                 if (stack.StackData.ItemAmount < stackMaxSize)
                 {
                     int delta = stackMaxSize - stack.StackData.ItemAmount;
@@ -233,7 +296,10 @@ public class UIInventory : MonoBehaviour
         }
         else
         {
-            _itemStacks[itemType.ID].AddRange(addedStacks);
+            foreach (var pair in addedStacks)
+            {
+                _itemStacks[itemType.ID].Add(pair.Key, pair.Value);
+            }
         }
 
         return true;
@@ -265,7 +331,7 @@ public class UIInventory : MonoBehaviour
     private UIStack AddStackToInventory(UIStackData stackData)
     { 
         UIStack uiStack = PoolingDelegatesContainer.FuncSpawnUIStack();
-        uiStack.InitializeWithData(stackData, _canvasData);
+        uiStack.InitializeWithData(stackData, _itemsParent);
         Vector2Int stackSizeInt = CraftingDelegatesContainer.QueryGetItemSO(stackData.ItemTypeID).Size;
 
         UpdateStackPos(uiStack, stackData.TilePos, stackSizeInt);
@@ -283,7 +349,7 @@ public class UIInventory : MonoBehaviour
         stackData.ItemTypeID = itemType.ID;
         stackData.TilePos = tilePos;
 
-        uiStack.InitializeWithData(stackData, _canvasData);
+        uiStack.InitializeWithData(stackData, _itemsParent);
         UpdateStackPos(uiStack, tilePos, itemType.Size);
         FillTiles(uiStack, tilePos);
 
@@ -301,14 +367,36 @@ public class UIInventory : MonoBehaviour
         }
     }
 
-    private void RemoveStackFromInventory(UIStack stack)
+    private void FreeTiles(UIStack stack)
+    { 
+        foreach (Vector2Int toFree in stack.GetFillState())
+        {
+            _tiles[TileIndex(toFree.x, toFree.y)].PlacedStack = null;
+        }
+    }
+
+    private void DeleteAddedStack(UIStack stack)
     { 
         foreach (Vector2Int toFree in stack.GetFillState())
         {
             _tiles[TileIndex(toFree.x, toFree.y)].PlacedStack = null;
         }
         stack.Despawn();
-        _itemStacks.Remove(stack.StackData.ItemTypeID);
+    }
+
+    private void RemoveStackFromInventory(UIStack stack)
+    {
+        FreeTiles(stack);
+
+        int key = stack.StackData.ItemTypeID;
+        if (_itemStacks[key].Count > 1)
+        {
+            _itemStacks[key].Remove(stack.GetInstanceID());
+        }
+        else
+        { 
+            _itemStacks.Remove(stack.StackData.ItemTypeID);
+        }
     }
 
     private void UpdateStackPos(UIStack uiStack, Vector2Int tilePos, Vector2Int stackSizeInt)
@@ -330,6 +418,15 @@ public class UIInventory : MonoBehaviour
     private int TileIndex(Vector2Int xy)
     {
         return xy.y * _tilesResolution.x + xy.x;
+    }
+
+    private bool CheckIfTileInInventory(UITile tile)
+    {
+        if (!_inventoryTiles.Contains(tile.GetInstanceID()))
+        {
+            return false;
+        }
+        return true;
     }
 
     private void OnApplicationQuit()

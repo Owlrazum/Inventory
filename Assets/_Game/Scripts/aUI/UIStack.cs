@@ -3,9 +3,10 @@ using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 
 using TMPro;
+
+using SNG.UI;
 
 [System.Serializable]
 public class UIStackData
@@ -16,18 +17,12 @@ public class UIStackData
     public Vector2Int TilePos;
 }
 
-public class CanvasDataType
-{
-    public GraphicRaycaster GraphicRaycaster;
-    public RectTransform BoundingRect;
-}
-
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
-public class UIStack : MonoBehaviour, IPointerClickHandler, IPoolable
+public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler
 {
     public UIStackData StackData { get; private set; }
-    public CanvasDataType CanvasData { get; private set; }
+    public RectTransform BoundingRect { get; private set; }
 
     private ItemSO _itemSO;
 
@@ -39,10 +34,10 @@ public class UIStack : MonoBehaviour, IPointerClickHandler, IPoolable
         }
     }
 
-    public void InitializeWithData(UIStackData stackData, CanvasDataType canvasData)
+    public void InitializeWithData(UIStackData stackData, RectTransform boundingRect)
     {
         StackData = stackData;
-        CanvasData = canvasData;
+        BoundingRect = boundingRect;
 
         _itemSO = CraftingDelegatesContainer.FuncGetItemSO(stackData.ItemTypeID);
 
@@ -57,7 +52,7 @@ public class UIStack : MonoBehaviour, IPointerClickHandler, IPoolable
         }
 
 
-        _rect.SetParent(CanvasData.BoundingRect, false);
+        _rect.SetParent(BoundingRect, false);
 
         gameObject.SetActive(true);
     }
@@ -69,18 +64,10 @@ public class UIStack : MonoBehaviour, IPointerClickHandler, IPoolable
     }
 
     private RectTransform _rect;
+    public RectTransform Rect { get { return _rect; } }
+
     private Image _image;
     private TextMeshProUGUI _textMesh;
-    private IEnumerator _followUpdateLoop;
-
-    private enum State
-    { 
-        Idle,
-        Following
-    }
-    private State _state;
-
-    private const float DEPTH_POS = -1; // TODO: Load from SO
 
     private void Awake()
     {
@@ -90,6 +77,11 @@ public class UIStack : MonoBehaviour, IPointerClickHandler, IPoolable
         {
             Debug.LogError("UIStack should have textMesh in its first child");
         }
+    }
+
+    private void Start()
+    {
+        UIQueriesContainer.QueryGetUpdater().AddPointerClickHandler(this);
     }
 
     public Vector2Int[] GetFillState()
@@ -113,57 +105,33 @@ public class UIStack : MonoBehaviour, IPointerClickHandler, IPoolable
         PoolingDelegatesContainer.EventDespawnUIStack(this);
     }
 
-    public void OnPointerClick(PointerEventData eventData)
+    public void OnPointerClick(MouseButtonType pressedButton)
     {
-        if (eventData.button != PointerEventData.InputButton.Left)
-        { 
+        if (CraftingDelegatesContainer.QueryIsStackSelected())
+        {
             return;
         }
 
-        OnLeftClick();
+        CraftingDelegatesContainer.EventStackWasSelected(this);
+
+        switch(pressedButton)
+        {
+            case MouseButtonType.Left:
+                OnLeftClick();
+                break;
+            case MouseButtonType.Right:
+                OnRightClick();
+                break;
+        }
     }
 
     private void OnLeftClick()
     {
-        if (_state == State.Idle)
-        {
-            _state = State.Following;
-            _followUpdateLoop = FollowCursorUpdateLoop();
-            StartCoroutine(_followUpdateLoop);
-        }
-        else if (_state == State.Following)
-        {
-            if (CheckIfPlaceable())
-            { 
-
-            }
-        }
     }
 
-    private IEnumerator FollowCursorUpdateLoop()
-    {
-        while (true)
-        { 
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                CanvasData.BoundingRect, Input.mousePosition, null, out Vector2 localPoint
-            );
-
-            _rect.anchoredPosition3D = new Vector3(localPoint.x, localPoint.y, DEPTH_POS);
-            yield return null;
-        }
-    }
-
-    private bool CheckIfPlaceable()
-    {
-        PointerEventData eventData = new PointerEventData(null);
-        List<RaycastResult> results = new List<RaycastResult>();
-        CanvasData.GraphicRaycaster.Raycast(eventData, results);
-        foreach (RaycastResult res in results)
-        {
-            Debug.Log(res.gameObject + " " + res.sortingLayer);
-        }
-
-        return true;
+    private void OnRightClick()
+    { 
+        
     }
 
     public Transform GetTransform()
