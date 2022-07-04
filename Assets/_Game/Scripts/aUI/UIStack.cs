@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -8,50 +7,66 @@ using UnityEngine.EventSystems;
 
 using TMPro;
 
+[System.Serializable]
+public class UIStackData
+{ 
+    public int ItemAmount;
+    public int ItemTypeID;
+    
+    public Vector2Int TilePos;
+}
+
+public class CanvasDataType
+{
+    public GraphicRaycaster GraphicRaycaster;
+    public RectTransform BoundingRect;
+}
+
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
 public class UIStack : MonoBehaviour, IPointerClickHandler, IPoolable
 {
-    public ItemSO ItemType { get; private set; }
-    public int ItemAmount { get; set; }
+    public UIStackData StackData { get; private set; }
+    public CanvasDataType CanvasData { get; private set; }
 
-    public void InitializeWithItemType(ItemSO itemTypeArg, int itemAmountArg)
+    private ItemSO _itemSO;
+
+    public Vector2Int Size
     {
-        ItemType = itemTypeArg;
-        ItemAmount = itemAmountArg;
+        get
+        {
+            return _itemSO.Size;
+        }
+    }
 
-        _image.sprite = ItemType.Sprite;
-        if (ItemAmount == 1)
+    public void InitializeWithData(UIStackData stackData, CanvasDataType canvasData)
+    {
+        StackData = stackData;
+        CanvasData = canvasData;
+
+        _itemSO = CraftingDelegatesContainer.FuncGetItemSO(stackData.ItemTypeID);
+
+        _image.sprite = _itemSO.Sprite;
+        if (StackData.ItemAmount == 1)
         {
             _textMesh.text = "";
         }
         else
         {
-            _textMesh.text = ItemAmount.ToString();
+            _textMesh.text = StackData.ItemAmount.ToString();
         }
+
+
+        _rect.SetParent(CanvasData.BoundingRect, false);
+
+        gameObject.SetActive(true);
     }
 
-    public RectTransform BoundingRect { get; private set; }
-    public GraphicRaycaster GraphicRaycaster { get; private set; }
-    public void AssignReferences(
-        RectTransform boundingRectArg,
-        GraphicRaycaster graphicRaycasterArg
-    )
+    public void UpdateRect(Vector2 anchoredPos, Vector2 sizeDelta)
     {
-        BoundingRect = boundingRectArg;
-        GraphicRaycaster = graphicRaycasterArg;
-
-        _rect.SetParent(BoundingRect, false);
-    }
-
-    public Vector2Int TilePos { get; private set; }
-    public void UpdatePos(Vector2Int tilePosArg, Vector2 anchoredPos)
-    {
-        TilePos = tilePosArg;
         _rect.anchoredPosition = anchoredPos;
+        _rect.sizeDelta = sizeDelta;
     }
-
-    public Action EventOnClick { get; set; }
 
     private RectTransform _rect;
     private Image _image;
@@ -75,30 +90,15 @@ public class UIStack : MonoBehaviour, IPointerClickHandler, IPoolable
         {
             Debug.LogError("UIStack should have textMesh in its first child");
         }
-
-// rect.anchorMin = new Vector2(0, 1);
-// rect.anchorMax = new Vector2(0, 1);
-// rect.pivot = new Vector2(0.5f, 0.5f);
-    }
-
-    /// <summary>
-    /// Should be called after all public fields are set;
-    /// </summary>
-    public void OnSpawn(Vector2 anchoredPos, Vector2 sizeDeltaArg)
-    {
-        gameObject.SetActive(true);
-        _image.sprite = ItemType.Sprite;
-        _rect.anchoredPosition = anchoredPos;
-        _rect.sizeDelta = sizeDeltaArg;
     }
 
     public Vector2Int[] GetFillState()
     {
-        Vector2Int[] fillState = new Vector2Int[ItemType.Size.x * ItemType.Size.y];
+        Vector2Int[] fillState = new Vector2Int[_itemSO.Size.x * _itemSO.Size.y];
         int indexer = 0;
-        for (int j = TilePos.y; j < ItemType.Size.y; j++)
+        for (int j = StackData.TilePos.y; j < _itemSO.Size.y; j++)
         {
-            for (int i = TilePos.x; i < ItemType.Size.x; i++)
+            for (int i = StackData.TilePos.x; i < _itemSO.Size.x; i++)
             {
                 fillState[indexer++] = new Vector2Int(i, j);
             }
@@ -145,7 +145,7 @@ public class UIStack : MonoBehaviour, IPointerClickHandler, IPoolable
         while (true)
         { 
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                BoundingRect, Input.mousePosition, null, out Vector2 localPoint
+                CanvasData.BoundingRect, Input.mousePosition, null, out Vector2 localPoint
             );
 
             _rect.anchoredPosition3D = new Vector3(localPoint.x, localPoint.y, DEPTH_POS);
@@ -157,7 +157,7 @@ public class UIStack : MonoBehaviour, IPointerClickHandler, IPoolable
     {
         PointerEventData eventData = new PointerEventData(null);
         List<RaycastResult> results = new List<RaycastResult>();
-        GraphicRaycaster.Raycast(eventData, results);
+        CanvasData.GraphicRaycaster.Raycast(eventData, results);
         foreach (RaycastResult res in results)
         {
             Debug.Log(res.gameObject + " " + res.sortingLayer);
@@ -171,3 +171,8 @@ public class UIStack : MonoBehaviour, IPointerClickHandler, IPoolable
         return transform;
     }
 }
+
+
+// rect.anchorMin = new Vector2(0, 1);
+// rect.anchorMax = new Vector2(0, 1);
+// rect.pivot = new Vector2(0.5f, 0.5f);

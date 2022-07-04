@@ -3,7 +3,8 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "IngredientsList", menuName = "ScriptableObjects/Crafting/IngredientsList", order = 1)]
 public class ItemsListSO : ScriptableObject
 {
-    public ItemSO[] Items;
+    [SerializeField]
+    private ItemSO[] Items;
 
     public void AssignIDs()
     {
@@ -12,5 +13,10 @@ public class ItemsListSO : ScriptableObject
             Items[i].ID = i;
             Debug.Log("Assigned " + i + " to " + Items[i].name);
         }
+    }
+
+    public ItemSO GetItem(int id)
+    {
+        return Items[id];
     }
 }

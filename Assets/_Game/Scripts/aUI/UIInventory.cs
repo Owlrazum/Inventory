@@ -4,127 +4,86 @@ using UnityEngine.UI;
 
 [RequireComponent(typeof(Canvas))]
 [RequireComponent(typeof(GraphicRaycaster))]
-public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
+public class UIInventory : MonoBehaviour
 {
     [SerializeField]
-    private Vector2Int _tilesSize;
+    private Vector2Int _tilesResolution;
 
     [SerializeField]
-    private MultiDimArrayPackage<UITile>[] _tilesSerialized;
+    private float _tileSize;
 
     [SerializeField]
-    private DictionaryPackage<ItemSO, List<UIStack>>[] _stacksSerialized;
+    private Vector2 _gridSizeDelta;
 
     [SerializeField]
     private RectTransform _tilesParent;
     [SerializeField]
     private RectTransform _itemsParent;
 
-    private GraphicRaycaster _graphicRaycaster;
+    [SerializeField]
+    private UITile[] _tiles;
 
-    private UITile[,] _tiles;
-    private Dictionary<ItemSO, List<UIStack>> _itemStacks;
+    private Dictionary<int, List<UIStack>> _itemStacks;
+    
+    private CanvasDataType _canvasData;
+    private Canvas _canvas;
+    
     
     #region Editor
 #if UNITY_EDITOR
     public void AssignTiles(
         UITile[,] tilesArg, 
         RectTransform tilesParentArg,
-        RectTransform itemsParentArg)
+        RectTransform itemsParentArg,
+        float squareSizeArg,
+        Vector2 gridSizeDeltaArg)
     {
-        _tiles = tilesArg;
-        _tilesSize = new Vector2Int(_tiles.GetLength(0), _tiles.GetLength(1));
+        _tilesResolution = new Vector2Int(tilesArg.GetLength(0), tilesArg.GetLength(1));
         _tilesParent = tilesParentArg;
         _itemsParent = itemsParentArg;
-    }
 
-    public UITile[,] GetTiles()
-    {
-        OnAfterDeserialize();
-        return _tiles;
+        _tileSize = squareSizeArg;
+        _gridSizeDelta = gridSizeDeltaArg;
+
+        _tiles = new UITile[_tilesResolution.x * _tilesResolution.y];
+        for (int j = 0; j < _tilesResolution.y; j++)
+        {
+            for (int i = 0; i < _tilesResolution.x; i++)
+            {
+                _tiles[j * _tilesResolution.x + i] = tilesArg[i, j];
+            }
+        }
     }
 #endif
     #endregion
 
-    #region Serialization
-    public void OnBeforeSerialize()
-    {
-        if (_tiles == null)
-        {
-            Debug.Log("Not serializing tiles");
-            return;
-        }
-
-        int tilesLength = _tilesSize.x * _tilesSize.y;
-        _tilesSerialized = new MultiDimArrayPackage<UITile>[tilesLength];
-        for (int j = 0; j < _tilesSize.y; j++)
-        {
-            for (int i = 0; i < _tilesSize.x; i++)
-            {
-                _tilesSerialized[j * _tilesSize.x + i] = 
-                    (new MultiDimArrayPackage<UITile>(i, j, _tiles[i, j]));
-            }
-        }
-
-        if (_itemStacks == null)
-        {
-            return;
-        }
-
-        _stacksSerialized = new DictionaryPackage<ItemSO, List<UIStack>>[_itemStacks.Count];
-        int indexer = 0;
-        foreach(var pair in _itemStacks)
-        {
-            _stacksSerialized[indexer++] = new DictionaryPackage<ItemSO, List<UIStack>>(pair.Key, pair.Value);
-        }
-    }
-
-    public void OnAfterDeserialize()
-    {
-        if (_tilesSerialized[0].Element == null)
-        {
-            Debug.Log("No Deserialize!");
-            return;
-        }
-
-        _tiles = new UITile[_tilesSize.x, _tilesSize.y];
-        foreach(var package in _tilesSerialized)
-        {
-            _tiles[package.ColumnIndex, package.RowIndex] = package.Element;
-        }
-
-        _itemStacks = new Dictionary<ItemSO, List<UIStack>>();
-        if (_stacksSerialized == null)
-        {
-            return;
-        }
-
-        foreach(var element in _stacksSerialized)
-        {
-            _itemStacks.Add(element.Key, element.Value);
-        }
-    }
-    #endregion
-
     private void Awake()
     {
-        TryGetComponent(out _graphicRaycaster);
-        gameObject.SetActive(false);
+#if UNITY_EDITOR
         if (_tiles == null)
         {
             Debug.LogError("You should generate an inventory through window InventoryGeneratorWindow");
             return;
         }
+#endif
 
-        if (_itemStacks == null)
-        {
-            _itemStacks = new Dictionary<ItemSO, List<UIStack>>();
-        }
+        TryGetComponent(out _canvas);
+        _canvas.enabled = false;
+
+        _canvasData = new CanvasDataType();
+        TryGetComponent(out _canvasData.GraphicRaycaster);
+        _canvasData.BoundingRect = _itemsParent;
 
         CraftingDelegatesContainer.FuncNewItemsPlacementIfPossible += OnNewItemsPlacementIfPossible;
         //CraftingDelegatesContainer.EventInventoryUpdate += OnInventoryUpdate;
 
         InputDelegatesContainer.EventInventoryCommandTriggered += OnInventoryCommandTriggered;
+    }
+
+    private void Start()
+    {
+        _itemStacks = new Dictionary<int, List<UIStack>>();
+        //TODO intiiaize
     }
 
     private void OnDestroy()
@@ -139,7 +98,7 @@ public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
     // Places items based on topLeftCorner
     private void OnInventoryCommandTriggered()
     {
-        if (gameObject.activeSelf)
+        if (_canvas.enabled)
         {
             HideInventory();
         }
@@ -151,12 +110,12 @@ public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
 
     private void HideInventory()
     {
-        gameObject.SetActive(false);
+        _canvas.enabled = false;
     }
 
     private void ShowInventory()
     { 
-        gameObject.SetActive(true);
+        _canvas.enabled = true;
     }
     #endregion
 
@@ -165,13 +124,16 @@ public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
         // TODO add and if no more possible, revert and return false
         int predictionAmount = amount;
         int stackMaxSize = itemType.StackCapacity;
-        if (_itemStacks.ContainsKey(itemType))
+
+        List<UIStack> addedStacks = new List<UIStack>();
+
+        if (_itemStacks.ContainsKey(itemType.ID))
         {
-            foreach (UIStack stack in _itemStacks[itemType])
+            foreach (UIStack stack in _itemStacks[itemType.ID])
             {
-                if (stack.ItemAmount < stackMaxSize)
+                if (stack.StackData.ItemAmount < stackMaxSize)
                 {
-                    int delta = stackMaxSize - stack.ItemAmount;
+                    int delta = stackMaxSize - stack.StackData.ItemAmount;
                     if (delta < predictionAmount)
                     {
                         predictionAmount -= delta;
@@ -184,10 +146,10 @@ public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
             }
         }
 
-        List<UIStack> addedStacks = new List<UIStack>();
-        for (int j = 0; j < _tiles.GetLength(1); j++)
+        
+        for (int j = 0; j < _tilesResolution.y; j++)
         {
-            for (int i = 0; i < _tiles.GetLength(0); i++)
+            for (int i = 0; i < _tilesResolution.x; i++)
             {
                 Vector2Int tilePos = new Vector2Int(i, j);
                 if (CheckIfSizeFits(itemType.Size, tilePos))
@@ -216,26 +178,41 @@ public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
         return false;
 
     Placement:
-        if (_itemStacks.ContainsKey(itemType))
+        if (_itemStacks.ContainsKey(itemType.ID))
         {
-            foreach (UIStack stack in _itemStacks[itemType])
+            foreach (UIStack stack in _itemStacks[itemType.ID])
             {
-                if (stack.ItemAmount < stackMaxSize)
+                if (stack.StackData.ItemAmount < stackMaxSize)
                 {
-                    int delta = stackMaxSize - stack.ItemAmount;
+                    int delta = stackMaxSize - stack.StackData.ItemAmount;
                     if (delta < amount)
                     {
                         amount -= delta;
-                        stack.ItemAmount = stackMaxSize;
+                        stack.StackData.ItemAmount = stackMaxSize;
                     }
                     else
                     {
-                        stack.ItemAmount += delta;
+                        stack.StackData.ItemAmount += delta;
                         break;
                     }
                 }
             }
         }
+
+        if (amount <= 0)
+        {
+            return true;
+        }
+
+        if (!_itemStacks.ContainsKey(itemType.ID))
+        {
+            _itemStacks.Add(itemType.ID, addedStacks);
+        }
+        else
+        {
+            _itemStacks[itemType.ID].AddRange(addedStacks);
+        }
+
         return true;
     }
 
@@ -246,25 +223,13 @@ public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
             for (int j = 0; j < size.y; j++)
             {
                 Vector2Int tileIndex = new Vector2Int(pos.x + i, pos.y + j);
-                if (tileIndex.x >= _tiles.GetLength(0) ||
-                    tileIndex.y >= _tiles.GetLength(1))
+                if (tileIndex.x >= _tilesResolution.x ||
+                    tileIndex.y >= _tilesResolution.y)
                 {
                     return false;
                 }
 
-                if (_tiles == null)
-                {
-                    Debug.LogError("Tiles are null");
-                    return false;
-                }
-
-                if (_tiles[tileIndex.x, tileIndex.y] == null)
-                {
-                    Debug.LogError("tile is null");
-                    return false;
-                }
-
-                if (_tiles[tileIndex.x, tileIndex.y].PlacedStack != null)
+                if (_tiles[TileIndex(tileIndex)].PlacedStack != null)
                 {
                     return false;
                 }
@@ -274,33 +239,41 @@ public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
         return true;
     }
 
+    private UIStack AddStackToInventory(UIStackData stackData)
+    { 
+        UIStack uiStack = PoolingDelegatesContainer.FuncSpawnUIStack();
+        uiStack.InitializeWithData(stackData, _canvasData);
+        Vector2Int stackSizeInt = CraftingDelegatesContainer.QueryGetItemSO(stackData.ItemTypeID).Size;
+
+        UpdateStackPos(uiStack, stackData.TilePos, stackSizeInt);
+        FillTiles(uiStack, stackData.TilePos);
+        
+        return uiStack;
+    }
+
     private UIStack AddStackToInventory(ItemSO itemType, int itemAmount, Vector2Int tilePos)
     {
         UIStack uiStack = PoolingDelegatesContainer.FuncSpawnUIStack();
-        uiStack.InitializeWithItemType(itemType, itemAmount);
-        uiStack.AssignReferences(_itemsParent, _graphicRaycaster);
 
+        UIStackData stackData = new UIStackData();
+        stackData.ItemAmount = itemAmount;
+        stackData.ItemTypeID = itemType.ID;
+        stackData.TilePos = tilePos;
+
+        uiStack.InitializeWithData(stackData, _canvasData);
+        UpdateStackPos(uiStack, tilePos, itemType.Size);
         FillTiles(uiStack, tilePos);
-
-        RectTransform endTile = _tiles[tilePos.x + itemType.Size.x - 1, tilePos.y + itemType.Size.y - 1].Rect;
-        Vector2 adjust = new Vector2(endTile.rect.width, -endTile.rect.height);
-
-        Vector2 anchPos = 
-            (_tiles[tilePos.x, tilePos.y].Rect.anchoredPosition +
-            endTile.anchoredPosition + adjust) / 2;
-
-        uiStack.UpdatePos(tilePos, anchPos);
 
         return uiStack;
     }
 
     private void FillTiles(UIStack stack, Vector2Int pos)
     { 
-        for (int i = 0; i < stack.ItemType.Size.x; i++)
+        for (int i = 0; i < stack.Size.x; i++)
         {
-            for (int j = 0; j < stack.ItemType.Size.y; j++)
+            for (int j = 0; j < stack.Size.y; j++)
             {
-                _tiles[pos.x + i, pos.y + j].PlacedStack = stack;
+                _tiles[TileIndex(pos.x + i, pos.y + j)].PlacedStack = stack;
             }
         }
     }
@@ -309,8 +282,30 @@ public class UIInventory : MonoBehaviour, ISerializationCallbackReceiver
     { 
         foreach (Vector2Int toFree in stack.GetFillState())
         {
-            _tiles[toFree.x, toFree.y].PlacedStack = null;
+            _tiles[TileIndex(toFree.x, toFree.y)].PlacedStack = null;
         }
         stack.Despawn();
+        _itemStacks.Remove(stack.StackData.ItemTypeID);
+    }
+
+    private void UpdateStackPos(UIStack uiStack, Vector2Int tilePos, Vector2Int stackSizeInt)
+    { 
+        RectTransform startTile = _tiles[TileIndex(tilePos)].Rect;
+        RectTransform endTile = _tiles[TileIndex(tilePos + stackSizeInt - Vector2Int.one)].Rect;
+        Vector2 adjust = new Vector2(endTile.rect.width, -endTile.rect.height);
+
+        Vector2 anchPos = (startTile.anchoredPosition + endTile.anchoredPosition + adjust) / 2;
+        Vector2 stackSize = new Vector2(_tileSize * stackSizeInt.x, _tileSize * stackSizeInt.y);
+        uiStack.UpdateRect(anchPos, stackSize);
+    }
+
+    private int TileIndex(int x, int y)
+    {
+        return y * _tilesResolution.x + x;
+    }
+
+    private int TileIndex(Vector2Int xy)
+    {
+        return xy.y * _tilesResolution.x + xy.x;
     }
 }

@@ -111,7 +111,7 @@ public class UIInventoryGridGeneratorWindow : EditorWindow
 
         if (canvasGb.TryGetComponent(out UIInventory uiInventory))
         {
-            uiInventory.AssignTiles(generatedTiles, tilesParent, itemsParent);
+            uiInventory.AssignTiles(generatedTiles, tilesParent, itemsParent, _squareSize, gridSizeDelta);
             Debug.Log("Assigned tiles");
         }
     }

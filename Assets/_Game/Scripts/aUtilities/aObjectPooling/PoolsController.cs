@@ -36,13 +36,11 @@ public class PoolsController : MonoBehaviour
     private UIStack SpawnUIStack()
     {
         UIStack uiStack = _stacksPool.Spawn();
-        uiStack.gameObject.SetActive(true);
         return uiStack;
     }
 
     private void DespawnUIStack(UIStack uiStack)
     {
-        uiStack.gameObject.SetActive(false);
         _stacksPool.Despawn(uiStack);
     }
 }

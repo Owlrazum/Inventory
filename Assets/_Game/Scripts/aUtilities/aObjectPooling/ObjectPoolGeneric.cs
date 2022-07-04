@@ -78,7 +78,7 @@ public class ObjectPool<TPoolable> where TPoolable : IPoolable
             GameObject gb = UnityEngine.Object.Instantiate(_prefab);
             TPoolable poolable = gb.GetComponent<TPoolable>();
             _pool.Enqueue(poolable);
-            gb.transform.parent = _despawnParent;
+            gb.transform.SetParent(_despawnParent, false);
             gb.SetActive(false);
         }
     }
