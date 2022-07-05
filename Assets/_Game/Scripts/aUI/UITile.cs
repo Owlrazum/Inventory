@@ -14,7 +14,6 @@ public class UITile : MonoBehaviour, IPointerEnterExitHandler
         set
         {
             _placedStack = value;
-            _image.color = Color.red;
         }
     }
 
@@ -43,13 +42,6 @@ public class UITile : MonoBehaviour, IPointerEnterExitHandler
         get { return _interactionRect; }
     }
 
-    private enum StateType
-    { 
-        Default,
-        Highlighted
-    }
-    private StateType _state;
-
     private Image _image;
 
     private bool _isStateControlledOutside;
@@ -76,25 +68,11 @@ public class UITile : MonoBehaviour, IPointerEnterExitHandler
 
     public void OnPointerEnter()
     {
-        if (_state == StateType.Highlighted || _isStateControlledOutside)
-        {
-            return;
-        }
-
-        _image.sprite = _activeSprite;
-        _state = StateType.Highlighted;
         CraftingDelegatesContainer.EventTileUnderPointerCame(this);
     }
 
     public void OnPointerExit()
     {
-        if (_state == StateType.Default || _isStateControlledOutside)
-        {
-            return;
-        }
-
-        _image.sprite = _defaultSprite;
-        _state = StateType.Default;
         CraftingDelegatesContainer.EventTileUnderPointerGone();
     }
 
@@ -102,13 +80,21 @@ public class UITile : MonoBehaviour, IPointerEnterExitHandler
     {
         _isStateControlledOutside = true;
         _image.sprite = _activeSprite;
-        _state = StateType.Highlighted;
     }
 
     public void DefaultState()
     { 
         _isStateControlledOutside = false;
         _image.sprite = _defaultSprite;
-        _state = StateType.Default;
+    }
+
+    public void DebugColor()
+    {
+        _image.color = Color.red;
+    }
+
+    public void UndoDebugColor()
+    { 
+        _image.color = Color.white;
     }
 }

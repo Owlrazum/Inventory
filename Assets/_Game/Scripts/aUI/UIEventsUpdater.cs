@@ -73,7 +73,12 @@ public class UIEventsUpdater : MonoBehaviour
                     handler.OnPointerExit();
                 }
             }
-            else
+        }
+
+        for (int i = 0; i < _enterExitHandlers.Count; i++)
+        {
+            IPointerEnterExitHandler handler = _enterExitHandlers[i];
+            if (RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect, mousePos, null))
             {
                 if (!_enterStates[i])
                 {

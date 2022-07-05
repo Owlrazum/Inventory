@@ -81,14 +81,6 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler, IPointerE
         PoolingDelegatesContainer.EventDespawnUIStack(this);
     }
 
-    private void OnDestroy()
-    {
-        if (StackData != null)
-        { 
-            StackData.TilePosEventChanged -= OnTilePosChanged;
-        }
-    }
-
     private void OnTilePosChanged()
     {
         _shouldUpdateFillState = true;
@@ -124,12 +116,26 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler, IPointerE
         { 
             Debug.LogError("UIStack should have interactionRect as its second child");
         }
+
+        Subscribe();
     }
 
     private void Start()
     {
         UIQueriesContainer.QueryGetUpdater().AddPointerClickHandler(this);
         UIQueriesContainer.QueryGetUpdater().AddPointerEnterExitHandler(this);
+    }
+
+    private void Subscribe()
+    {
+    }
+
+    private void OnDestroy()
+    {
+        if (StackData != null)
+        { 
+            StackData.TilePosEventChanged -= OnTilePosChanged;
+        }
     }
 
     public Vector2Int[] GetFillState()

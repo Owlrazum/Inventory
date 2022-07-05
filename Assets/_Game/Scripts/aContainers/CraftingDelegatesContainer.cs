@@ -36,6 +36,30 @@ public static class CraftingDelegatesContainer
     public static Action<UIStack> EventStackShouldHighlight;
     public static Action<UIStack> EventStackShouldDefault;
 
+    // delta relative to tileUnderPointer
+    public static Func<Vector2Int[], Vector2Int, bool> FuncCheckSelectedStackFillStateValid;
+    public static bool QueryCheckSelectedStackFillStateValid(Vector2Int[] fillState, Vector2Int pos)
+    { 
+#if UNITY_EDITOR
+        if (FuncCheckSelectedStackFillStateValid.GetInvocationList().Length != 1) { Debug.LogError("There should be only one subscription"); }
+#endif
+
+        return FuncCheckSelectedStackFillStateValid.Invoke(fillState, pos);
+    }
+
+    public static Func<UIStack> FuncGetPushedOutByPlacementStack;
+    public static UIStack QueryPushedOutByPlacementStack()
+    { 
+#if UNITY_EDITOR 
+        if (FuncGetPushedOutByPlacementStack.GetInvocationList().Length != 1) { Debug.LogError("There should be only one subscription"); } 
+#endif
+
+        return FuncGetPushedOutByPlacementStack.Invoke();
+    }
+
+    public static Action<Vector2Int[], Vector2Int> EventTilesDeltaShouldHighLight;
+    public static Action<Vector2Int[], Vector2Int> EventTilesDeltaShouldDefault;
+
     //     public static Func<UIStack> FuncSelectedStack;
     //     public static UIStack QuerySelectedStack()
     //     { 
@@ -48,20 +72,6 @@ public static class CraftingDelegatesContainer
 
     //         return FuncSelectedStack.Invoke();
     //     }
-
-    public delegate bool PlaceUnderPointerDelegate(UIStack toPlace, out UIStack pushedOutStack);
-    public static PlaceUnderPointerDelegate FuncIsStackPlaceableOnTileUnderPointer;
-    public static bool QueryIsStackPlaceableOnTileUnderPointer(UIStack stack, out UIStack pushedOutStack)
-    {
-#if UNITY_EDITOR
-        if (FuncIsStackPlaceableOnTileUnderPointer.GetInvocationList().Length != 1)
-        {
-            Debug.LogError("There should be only one subscription");
-        }
-#endif
-
-        return FuncIsStackPlaceableOnTileUnderPointer.Invoke(stack, out pushedOutStack);
-    }
 
     public static Action<UIStack> EventStackPlacementUnderPointer;
 
