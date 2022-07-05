@@ -65,7 +65,7 @@ public class UIEventsUpdater : MonoBehaviour
         for (int i = 0; i < _enterExitHandlers.Count; i++)
         {
             IPointerEnterExitHandler handler = _enterExitHandlers[i];
-            if (!RectTransformUtility.RectangleContainsScreenPoint(handler.Rect, mousePos))
+            if (!RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect, mousePos, null))
             {
                 if (_enterStates[i])
                 {

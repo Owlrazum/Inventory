@@ -101,6 +101,7 @@ public class UIInventoryGridGeneratorWindow : EditorWindow
 
                 // tile.Rect = rect;
                 generatedTiles[column, row] = tile;
+                tile.GenerationInitialize(new Vector2Int(column, row));
 
                 tilePos += horizDisplacement;
             }

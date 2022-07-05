@@ -32,7 +32,6 @@ public class UIInventory : MonoBehaviour
 
     private UITile _tileUnderPointer;
 
-
     #region Editor
 #if UNITY_EDITOR
     public void AssignTiles(
@@ -95,6 +94,9 @@ public class UIInventory : MonoBehaviour
         CraftingDelegatesContainer.EventTileUnderPointerCame += OnTileUnderPointerCame;
         CraftingDelegatesContainer.EventTileUnderPointerGone += OnTileUnderPointerGone;
 
+        CraftingDelegatesContainer.EventStackShouldHighlight += OnStackShouldHighlight;
+        CraftingDelegatesContainer.EventStackShouldDefault   += OnStackShouldDefault;
+
         CraftingDelegatesContainer.EventStackWasSelected += OnStackWasSelected;
 
         CraftingDelegatesContainer.FuncIsStackPlaceableOnTileUnderPointer += IsStackPlaceableOnTileUnderPointer;
@@ -109,6 +111,9 @@ public class UIInventory : MonoBehaviour
         
         CraftingDelegatesContainer.EventTileUnderPointerCame -= OnTileUnderPointerCame;
         CraftingDelegatesContainer.EventTileUnderPointerGone -= OnTileUnderPointerGone;
+
+        CraftingDelegatesContainer.EventStackShouldHighlight -= OnStackShouldHighlight;
+        CraftingDelegatesContainer.EventStackShouldDefault   -= OnStackShouldDefault;
 
         CraftingDelegatesContainer.EventStackWasSelected -= OnStackWasSelected;
 
@@ -152,21 +157,50 @@ public class UIInventory : MonoBehaviour
 
     private void OnTileUnderPointerGone()
     {
+        if (_tileUnderPointer == null)
+        {
+            return;
+        }
+        
         _tileUnderPointer = null;
+    }
+
+    private void OnStackShouldHighlight(UIStack stack)
+    {
+        foreach (var index in stack.GetFillState())
+        {
+            _tiles[TileIndex(index)].HighLightState();
+        }
+    }
+
+    private void OnStackShouldDefault(UIStack stack)
+    { 
+        foreach (var index in stack.GetFillState())
+        {
+            _tiles[TileIndex(index)].DefaultState();
+        }
     }
 
     private void OnStackWasSelected(UIStack stack)
     {
-        var fillState = stack.GetFillState();
+        RemoveStackFromInventory(stack);
     }
 
-    private bool IsStackPlaceableOnTileUnderPointer()
+    private bool IsStackPlaceableOnTileUnderPointer(UIStack stack, out UIStack pushedOutStack)
     {
+        pushedOutStack = null;
         if (_tileUnderPointer == null)
         {
             return false;
         }
 
+        Vector2Int stackSize = CraftingDelegatesContainer.FuncGetItemSO(stack.StackData.ItemTypeID).Size;
+        if (!CheckIfStackPlaceable(stackSize, _tileUnderPointer.Pos, out pushedOutStack))
+        {
+            return false;
+        }
+
+        RemoveStackFromInventory(pushedOutStack);
         return true;
     }
 
@@ -177,6 +211,7 @@ public class UIInventory : MonoBehaviour
             return;
         }
 
+        
     }
 
     #region InvenotoryDisplay
@@ -321,6 +356,42 @@ public class UIInventory : MonoBehaviour
                 if (_tiles[TileIndex(tileIndex)].PlacedStack != null)
                 {
                     return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private bool CheckIfStackPlaceable(Vector2Int size, Vector2Int pos, out UIStack affectedStack)
+    {
+        affectedStack = null;
+        UIStack currentStack = null;
+        for (int i = 0; i < size.x; i++)
+        {
+            for (int j = 0; j < size.y; j++)
+            {
+                Vector2Int tileIndex = new Vector2Int(pos.x + i, pos.y + j);
+                if (tileIndex.x >= _tilesResolution.x ||
+                    tileIndex.y >= _tilesResolution.y)
+                {
+                    return false;
+                }
+
+                currentStack = _tiles[TileIndex(tileIndex)].PlacedStack;
+                if (currentStack != null)
+                {
+                    if (affectedStack == null)
+                    { 
+                        affectedStack = currentStack;
+                    }
+                    else
+                    {
+                        if (affectedStack.GetInstanceID() != currentStack.GetInstanceID())
+                        { 
+                            return false;
+                        }
+                    }
                 }
             }
         }

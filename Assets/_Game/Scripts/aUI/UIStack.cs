@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,12 +13,26 @@ public class UIStackData
     public int ItemAmount;
     public int ItemTypeID;
     
-    public Vector2Int TilePos;
+    [SerializeField]
+    private Vector2Int _tilePos;
+
+    public Vector2Int TilePos
+    {
+        get { return _tilePos; }
+        set
+        {
+            _tilePos = value;
+            TilePosEventChanged?.Invoke();
+        }
+    }
+
+    [NonSerialized]
+    public Action TilePosEventChanged;
 }
 
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
-public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler
+public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler, IPointerEnterExitHandler
 {
     public UIStackData StackData { get; private set; }
     public RectTransform BoundingRect { get; private set; }
@@ -40,6 +53,9 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler
         BoundingRect = boundingRect;
 
         _itemSO = CraftingDelegatesContainer.FuncGetItemSO(stackData.ItemTypeID);
+        _fillState = new Vector2Int[_itemSO.Size.x * _itemSO.Size.y];
+        _shouldUpdateFillState = true;
+        StackData.TilePosEventChanged += OnTilePosChanged;
 
         _image.sprite = _itemSO.Sprite;
         if (StackData.ItemAmount == 1)
@@ -57,6 +73,27 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler
         gameObject.SetActive(true);
     }
 
+    public void Despawn()
+    {
+        gameObject.SetActive(false);
+        StackData.TilePosEventChanged -= OnTilePosChanged;
+        StackData = null;
+        PoolingDelegatesContainer.EventDespawnUIStack(this);
+    }
+
+    private void OnDestroy()
+    {
+        if (StackData != null)
+        { 
+            StackData.TilePosEventChanged -= OnTilePosChanged;
+        }
+    }
+
+    private void OnTilePosChanged()
+    {
+        _shouldUpdateFillState = true;
+    }
+
     public void UpdateRect(Vector2 anchoredPos, Vector2 sizeDelta)
     {
         _rect.anchoredPosition = anchoredPos;
@@ -66,8 +103,14 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler
     private RectTransform _rect;
     public RectTransform Rect { get { return _rect; } }
 
+    private RectTransform _interactionRect;
+    public RectTransform InteractionRect { get { return _interactionRect; } }
+
     private Image _image;
     private TextMeshProUGUI _textMesh;
+
+    private Vector2Int[] _fillState;
+    private bool _shouldUpdateFillState;
 
     private void Awake()
     {
@@ -77,32 +120,34 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler
         {
             Debug.LogError("UIStack should have textMesh in its first child");
         }
+        if (!transform.GetChild(1).TryGetComponent(out _interactionRect))
+        { 
+            Debug.LogError("UIStack should have interactionRect as its second child");
+        }
     }
 
     private void Start()
     {
         UIQueriesContainer.QueryGetUpdater().AddPointerClickHandler(this);
+        UIQueriesContainer.QueryGetUpdater().AddPointerEnterExitHandler(this);
     }
 
     public Vector2Int[] GetFillState()
     {
-        Vector2Int[] fillState = new Vector2Int[_itemSO.Size.x * _itemSO.Size.y];
-        int indexer = 0;
-        for (int j = StackData.TilePos.y; j < _itemSO.Size.y; j++)
-        {
-            for (int i = StackData.TilePos.x; i < _itemSO.Size.x; i++)
+        if (_shouldUpdateFillState)
+        { 
+            int indexer = 0;
+            for (int j = StackData.TilePos.y; j < StackData.TilePos.y + _itemSO.Size.y; j++)
             {
-                fillState[indexer++] = new Vector2Int(i, j);
+                for (int i = StackData.TilePos.x; i < StackData.TilePos.x + _itemSO.Size.x; i++)
+                {
+                    _fillState[indexer++] = new Vector2Int(i, j);
+                }
             }
+            _shouldUpdateFillState = false;
         }
 
-        return fillState;
-    }
-
-    public void Despawn()
-    {
-        gameObject.SetActive(false);
-        PoolingDelegatesContainer.EventDespawnUIStack(this);
+        return _fillState;
     }
 
     public void OnPointerClick(MouseButtonType pressedButton)
@@ -112,7 +157,7 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler
             return;
         }
 
-        CraftingDelegatesContainer.EventStackWasSelected(this);
+        CraftingDelegatesContainer.EventStackWasSelected?.Invoke(this);
 
         switch(pressedButton)
         {
@@ -131,7 +176,17 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler
 
     private void OnRightClick()
     { 
-        
+
+    }
+
+    public void OnPointerEnter()
+    {
+        CraftingDelegatesContainer.EventStackShouldHighlight?.Invoke(this);
+    }
+
+    public void OnPointerExit()
+    { 
+        CraftingDelegatesContainer.EventStackShouldDefault?.Invoke(this);
     }
 
     public Transform GetTransform()

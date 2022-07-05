@@ -33,8 +33,25 @@ public static class CraftingDelegatesContainer
         return FuncIsStackSelected.Invoke();
     }
 
-    public static Func<bool> FuncIsStackPlaceableOnTileUnderPointer;
-    public static bool QueryIsStackPlaceableOnTileUnderPointer()
+    public static Action<UIStack> EventStackShouldHighlight;
+    public static Action<UIStack> EventStackShouldDefault;
+
+    //     public static Func<UIStack> FuncSelectedStack;
+    //     public static UIStack QuerySelectedStack()
+    //     { 
+    // #if UNITY_EDITOR
+    //         if (FuncSelectedStack.GetInvocationList().Length != 1)
+    //         {
+    //             Debug.LogError("There should be only one subscription");
+    //         }
+    // #endif
+
+    //         return FuncSelectedStack.Invoke();
+    //     }
+
+    public delegate bool PlaceUnderPointerDelegate(UIStack toPlace, out UIStack pushedOutStack);
+    public static PlaceUnderPointerDelegate FuncIsStackPlaceableOnTileUnderPointer;
+    public static bool QueryIsStackPlaceableOnTileUnderPointer(UIStack stack, out UIStack pushedOutStack)
     {
 #if UNITY_EDITOR
         if (FuncIsStackPlaceableOnTileUnderPointer.GetInvocationList().Length != 1)
@@ -43,7 +60,7 @@ public static class CraftingDelegatesContainer
         }
 #endif
 
-        return FuncIsStackPlaceableOnTileUnderPointer.Invoke();
+        return FuncIsStackPlaceableOnTileUnderPointer.Invoke(stack, out pushedOutStack);
     }
 
     public static Action<UIStack> EventStackPlacementUnderPointer;
