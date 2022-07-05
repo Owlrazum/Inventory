@@ -38,6 +38,13 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler, IPointerE
     public RectTransform BoundingRect { get; private set; }
 
     private ItemSO _itemSO;
+    public ItemSO ItemType
+    {
+        get
+        {
+            return _itemSO;
+        }
+    }
 
     public Vector2Int Size
     {

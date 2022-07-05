@@ -1,7 +1,5 @@
 using System;
 
-using UnityEngine;
-
 public static class UIQueriesContainer
 {
     public static Func<float> FuncSceneLoadingProgress;

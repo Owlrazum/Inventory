@@ -15,4 +15,10 @@ public static class UIEventsContainer
 #endregion
 
     public static Action<string> EventBuildLog;
+
+    // registrationg is needed so pointer events correctly called.
+    public static Action EventRegisterMovingUI;
+    public static Action EventUnregisterMovingUI;
+
+    public static Action EventMovingUIFinishedMove;
 }

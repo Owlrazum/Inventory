@@ -73,7 +73,7 @@ public static class CraftingDelegatesContainer
     //         return FuncSelectedStack.Invoke();
     //     }
 
-    public static Action<UIStack> EventStackPlacementUnderPointer;
+    public static Action<UIStack, Vector2Int> EventStackPlacementUnderPointer;
 
     public static Func<ItemSO, int, bool> FuncNewItemsPlacementIfPossible;
     public static bool QueryNewItemsPlacementIfPossible(ItemSO itemType, int amount)

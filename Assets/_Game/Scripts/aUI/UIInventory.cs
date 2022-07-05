@@ -210,6 +210,7 @@ public class UIInventory : MonoBehaviour
     {
         UIStack currentStack = null;
         _pushedOutByPlacementStack = null;
+        print("Checkign valid state");
         foreach (var pos in tilesDelta)
         {
             Vector2Int tileIndex = tilePos + pos;
@@ -228,6 +229,7 @@ public class UIInventory : MonoBehaviour
                 if (_pushedOutByPlacementStack == null)
                 {
                     _pushedOutByPlacementStack = currentStack;
+                    Debug.Log(_pushedOutByPlacementStack);
                 }
                 else
                 {
@@ -266,19 +268,23 @@ public class UIInventory : MonoBehaviour
 
     private void OnStackWasSelected(UIStack stack)
     {
-        RemoveStackFromInventory(stack);
+        FreeTiles(stack);
     }
 
-    private void OnStackPlacementUnderPointer(UIStack stack)
+    private void OnStackPlacementUnderPointer(UIStack stack, Vector2Int tilePosDelta)
     {
         if (_tileUnderPointer == null)
         {
             return;
         }
 
+        stack.StackData.TilePos = _tileUnderPointer.Pos + tilePosDelta;
+        UpdateStackAnchPos(stack);
+        FillTiles(stack);
+
         if (_pushedOutByPlacementStack != null)
         { 
-            RemoveStackFromInventory(_pushedOutByPlacementStack);
+            FreeTiles(_pushedOutByPlacementStack);
             _pushedOutByPlacementStack = null;
         }
     }
@@ -438,8 +444,8 @@ public class UIInventory : MonoBehaviour
         uiStack.InitializeWithData(stackData, _itemsParent);
         Vector2Int stackSizeInt = CraftingDelegatesContainer.QueryGetItemSO(stackData.ItemTypeID).Size;
 
-        UpdateStackPos(uiStack, stackData.TilePos, stackSizeInt);
-        FillTiles(uiStack, stackData.TilePos);
+        UpdateStackAnchPos(uiStack);
+        FillTiles(uiStack);
         
         return uiStack;
     }
@@ -454,14 +460,15 @@ public class UIInventory : MonoBehaviour
         stackData.TilePos = tilePos;
 
         uiStack.InitializeWithData(stackData, _itemsParent);
-        UpdateStackPos(uiStack, tilePos, itemType.Size);
-        FillTiles(uiStack, tilePos);
+        UpdateStackAnchPos(uiStack);
+        FillTiles(uiStack);
 
         return uiStack;
     }
 
-    private void FillTiles(UIStack stack, Vector2Int pos)
-    { 
+    private void FillTiles(UIStack stack)
+    {
+        Vector2Int pos = stack.StackData.TilePos;
         for (int i = 0; i < stack.Size.x; i++)
         {
             for (int j = 0; j < stack.Size.y; j++)
@@ -503,15 +510,17 @@ public class UIInventory : MonoBehaviour
         }
     }
 
-    private void UpdateStackPos(UIStack uiStack, Vector2Int tilePos, Vector2Int stackSizeInt)
-    { 
+    private void UpdateStackAnchPos(UIStack stack)
+    {
+        Vector2Int tilePos = stack.StackData.TilePos;
+        Vector2Int sizeInt = stack.ItemType.Size;
         RectTransform startTile = _tiles[TileIndex(tilePos)].Rect;
-        RectTransform endTile = _tiles[TileIndex(tilePos + stackSizeInt - Vector2Int.one)].Rect;
+        RectTransform endTile = _tiles[TileIndex(tilePos + sizeInt - Vector2Int.one)].Rect;
         Vector2 adjust = new Vector2(endTile.rect.width, -endTile.rect.height);
 
         Vector2 anchPos = (startTile.anchoredPosition + endTile.anchoredPosition + adjust) / 2;
-        Vector2 stackSize = new Vector2(_tileSize * stackSizeInt.x, _tileSize * stackSizeInt.y);
-        uiStack.UpdateRect(anchPos, stackSize);
+        Vector2 stackSize = new Vector2(_tileSize * sizeInt.x, _tileSize * sizeInt.y);
+        stack.UpdateRect(anchPos, stackSize);
     }
 
     private int TileIndex(int x, int y)

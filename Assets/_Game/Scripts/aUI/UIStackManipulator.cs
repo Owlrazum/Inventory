@@ -82,13 +82,30 @@ public class UIStackManipulator : MonoBehaviour
     {
         _selectedStack = stack;
 
-        InitializeSelectedFillState(stack);
+        InitializeSelectedFillState(_selectedStack);
 
-        _isCurrentPlacementPosValid = true;
+        _isCurrentPlacementPosValid =
+            CraftingDelegatesContainer.QueryCheckSelectedStackFillStateValid(_selectedStackFillState, _tileUnderPointer.Pos);
         CraftingDelegatesContainer.EventTilesDeltaShouldHighLight?.Invoke(_selectedStackFillState, _tileUnderPointer.Pos);
 
-        _stackFollowSequence = StackFollowSequence();
-        StartCoroutine(_stackFollowSequence);
+        if (_stackFollowSequence == null)
+        {
+            _stackFollowSequence = StackFollowSequence();
+            StartCoroutine(_stackFollowSequence);
+        }
+    }
+
+    // _selectedStack is already initialized by pushedOut
+    private void CheckPushedOutStackSelection()
+    {
+        if (_selectedStack == null)
+        {
+            return;
+        }
+        InitializeSelectedFillState(_selectedStack);
+
+        _isCurrentPlacementPosValid =
+            CraftingDelegatesContainer.QueryCheckSelectedStackFillStateValid(_selectedStackFillState, _tileUnderPointer.Pos);
     }
 
     private UIStack GetSelectedStack()
@@ -103,6 +120,7 @@ public class UIStackManipulator : MonoBehaviour
 
     private IEnumerator StackFollowSequence()
     {
+        UIEventsContainer.EventRegisterMovingUI?.Invoke();
         _prevPos = Input.mousePosition;
         _prevPos -= _pickUpDelta;
         yield return null;
@@ -115,9 +133,14 @@ public class UIStackManipulator : MonoBehaviour
                 {
                     UIStack toPlace = _selectedStack;
                     _selectedStack = CraftingDelegatesContainer.QueryPushedOutByPlacementStack();
-                    CraftingDelegatesContainer.EventStackPlacementUnderPointer?.Invoke(toPlace);
+                    print("pushedOut: " + _selectedStack);
+
+                    CraftingDelegatesContainer.EventStackPlacementUnderPointer?.Invoke(toPlace, _selectedStackFillState[0]);
+                    CheckPushedOutStackSelection();
                     if (_selectedStack == null)
                     { 
+                        UIEventsContainer.EventUnregisterMovingUI?.Invoke();
+                        _stackFollowSequence = null;
                         yield break;
                     }
 
@@ -129,6 +152,7 @@ public class UIStackManipulator : MonoBehaviour
             Vector2 newPos = Input.mousePosition;
             _selectedStack.Rect.anchoredPosition += newPos - _prevPos;
             _prevPos = newPos;
+            UIEventsContainer.EventMovingUIFinishedMove?.Invoke();
             yield return null;
         }
     }
