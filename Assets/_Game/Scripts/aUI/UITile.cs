@@ -36,10 +36,9 @@ public class UITile : MonoBehaviour, IPointerEnterExitHandler
         get { return _rect; }
     }
 
-    private RectTransform _interactionRect;
     public RectTransform InteractionRect 
     {
-        get { return _interactionRect; }
+        get { return _rect; }
     }
 
     private Image _image;
@@ -54,7 +53,6 @@ public class UITile : MonoBehaviour, IPointerEnterExitHandler
     private void Awake()
     {
         TryGetComponent(out _rect);
-        transform.GetChild(0).TryGetComponent(out _interactionRect);
         TryGetComponent(out _image);
 
         _placedStack = null;

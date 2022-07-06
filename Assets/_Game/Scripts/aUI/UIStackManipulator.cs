@@ -133,7 +133,6 @@ public class UIStackManipulator : MonoBehaviour
                 {
                     UIStack toPlace = _selectedStack;
                     _selectedStack = CraftingDelegatesContainer.QueryPushedOutByPlacementStack();
-                    print("pushedOut: " + _selectedStack);
 
                     CraftingDelegatesContainer.EventStackPlacementUnderPointer?.Invoke(toPlace, _selectedStackFillState[0]);
                     CheckPushedOutStackSelection();

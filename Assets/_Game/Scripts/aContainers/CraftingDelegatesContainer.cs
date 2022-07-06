@@ -47,14 +47,14 @@ public static class CraftingDelegatesContainer
         return FuncCheckSelectedStackFillStateValid.Invoke(fillState, pos);
     }
 
-    public static Func<UIStack> FuncGetPushedOutByPlacementStack;
+    public static Func<UIStack> FuncGetAndFreePushedOutByPlacementStack;
     public static UIStack QueryPushedOutByPlacementStack()
     { 
 #if UNITY_EDITOR 
-        if (FuncGetPushedOutByPlacementStack.GetInvocationList().Length != 1) { Debug.LogError("There should be only one subscription"); } 
+        if (FuncGetAndFreePushedOutByPlacementStack.GetInvocationList().Length != 1) { Debug.LogError("There should be only one subscription"); } 
 #endif
 
-        return FuncGetPushedOutByPlacementStack.Invoke();
+        return FuncGetAndFreePushedOutByPlacementStack.Invoke();
     }
 
     public static Action<Vector2Int[], Vector2Int> EventTilesDeltaShouldHighLight;

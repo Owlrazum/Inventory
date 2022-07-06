@@ -99,7 +99,7 @@ public class UIInventory : MonoBehaviour
         CraftingDelegatesContainer.EventStackShouldDefault   += OnStackShouldDefault;
 
         CraftingDelegatesContainer.FuncCheckSelectedStackFillStateValid += CheckIfSelectedStackFillStateValid;
-        CraftingDelegatesContainer.FuncGetPushedOutByPlacementStack += GetPushedOutByPlacementStack;
+        CraftingDelegatesContainer.FuncGetAndFreePushedOutByPlacementStack += GetAndFreePushedOutByPlacementStack;
 
         CraftingDelegatesContainer.EventTilesDeltaShouldHighLight += OnTilesDeltaShouldHighLight;
         CraftingDelegatesContainer.EventTilesDeltaShouldDefault   += OnTilesDeltaShouldDefault;
@@ -122,7 +122,7 @@ public class UIInventory : MonoBehaviour
         CraftingDelegatesContainer.EventStackShouldDefault   -= OnStackShouldDefault;
 
         CraftingDelegatesContainer.FuncCheckSelectedStackFillStateValid -= CheckIfSelectedStackFillStateValid;
-        CraftingDelegatesContainer.FuncGetPushedOutByPlacementStack -= GetPushedOutByPlacementStack;    
+        CraftingDelegatesContainer.FuncGetAndFreePushedOutByPlacementStack -= GetAndFreePushedOutByPlacementStack;    
 
         CraftingDelegatesContainer.EventTilesDeltaShouldHighLight -= OnTilesDeltaShouldHighLight;
         CraftingDelegatesContainer.EventTilesDeltaShouldDefault   -= OnTilesDeltaShouldDefault;
@@ -210,7 +210,6 @@ public class UIInventory : MonoBehaviour
     {
         UIStack currentStack = null;
         _pushedOutByPlacementStack = null;
-        print("Checkign valid state");
         foreach (var pos in tilesDelta)
         {
             Vector2Int tileIndex = tilePos + pos;
@@ -229,7 +228,6 @@ public class UIInventory : MonoBehaviour
                 if (_pushedOutByPlacementStack == null)
                 {
                     _pushedOutByPlacementStack = currentStack;
-                    Debug.Log(_pushedOutByPlacementStack);
                 }
                 else
                 {
@@ -245,9 +243,16 @@ public class UIInventory : MonoBehaviour
         return true;
     }
 
-    private UIStack GetPushedOutByPlacementStack()
+    private UIStack GetAndFreePushedOutByPlacementStack()
     {
-        return _pushedOutByPlacementStack;
+        if (_pushedOutByPlacementStack != null)
+        {
+            FreeTiles(_pushedOutByPlacementStack);
+            CheckAndUpdateAnchPosBelowPointer(_pushedOutByPlacementStack);
+        }
+        UIStack toReturn = _pushedOutByPlacementStack;
+        _pushedOutByPlacementStack = null;
+        return toReturn;
     }
 
     private void OnTilesDeltaShouldHighLight(Vector2Int[] tilesDelta, Vector2Int tilePos)
@@ -281,12 +286,6 @@ public class UIInventory : MonoBehaviour
         stack.StackData.TilePos = _tileUnderPointer.Pos + tilePosDelta;
         UpdateStackAnchPos(stack);
         FillTiles(stack);
-
-        if (_pushedOutByPlacementStack != null)
-        { 
-            FreeTiles(_pushedOutByPlacementStack);
-            _pushedOutByPlacementStack = null;
-        }
     }
 
     #region InvenotoryDisplay
@@ -540,6 +539,34 @@ public class UIInventory : MonoBehaviour
             return false;
         }
         return true;
+    }
+
+    private void CheckAndUpdateAnchPosBelowPointer(UIStack stack)
+    {
+        var fillState = stack.GetFillState();
+        for (int i = 0; i < fillState.Length; i++)
+        {
+            if (fillState[i] == _tileUnderPointer.Pos)
+            {
+                return;
+            }
+        }
+
+        int minDistance = -1;
+        Vector2Int minDelta = Vector2Int.zero;
+        for (int i = 0; i < fillState.Length; i++)
+        {
+            Vector2Int delta = _tileUnderPointer.Pos - fillState[i];
+            int distance = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
+            if (minDistance < 0 || distance < minDistance)
+            {
+                minDistance = distance;
+                minDelta = delta;
+            }
+        }
+
+        stack.StackData.TilePos += minDelta;
+        UpdateStackAnchPos(stack);
     }
 
     private void OnApplicationQuit()

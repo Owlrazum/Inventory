@@ -9,8 +9,12 @@ public enum MouseButtonType
     Middle
 }
 
+// TODO change tile under pointer determination by local point in rectangle;
+
 public class UIEventsUpdater : MonoBehaviour
 {
+    [SerializeField]
+    private float _offset;
     private List<IPointerClickHandler> _clickHandlers;
 
     private List<IPointerEnterExitHandler> _enterExitHandlers;
@@ -105,7 +109,7 @@ public class UIEventsUpdater : MonoBehaviour
         for (int i = 0; i < _enterExitHandlers.Count; i++)
         {
             IPointerEnterExitHandler handler = _enterExitHandlers[i];
-            if (!RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect, mousePos, null))
+            if (!RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect, mousePos, null, Vector4.one * _offset))
             {
                 if (_enterStates[i])
                 {
@@ -118,7 +122,7 @@ public class UIEventsUpdater : MonoBehaviour
         for (int i = 0; i < _enterExitHandlers.Count; i++)
         {
             IPointerEnterExitHandler handler = _enterExitHandlers[i];
-            if (RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect, mousePos, null))
+            if (RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect, mousePos, null, Vector4.one * _offset))
             {
                 if (!_enterStates[i])
                 {
@@ -132,5 +136,6 @@ public class UIEventsUpdater : MonoBehaviour
     private UIEventsUpdater GetUpdater()
     {
         return this;
+        //Hello Abai, what it this method?.
     }
 }
