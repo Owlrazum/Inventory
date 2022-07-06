@@ -20,14 +20,19 @@ public class UIEventsUpdater : MonoBehaviour
     private List<IPointerEnterExitHandler> _enterExitHandlers;
     private List<bool> _enterStates;
 
+    private List<IPointerLocalPointHandler> _localPointHandlers;
+
     private int _movingUICount = 0;
     private int _finishedMovingUICount = 0;
 
     private void Awake()
     {
         _clickHandlers = new List<IPointerClickHandler>();
+        
         _enterExitHandlers = new List<IPointerEnterExitHandler>();
         _enterStates = new List<bool>();
+        
+        _localPointHandlers = new List<IPointerLocalPointHandler>();
 
         UIEventsContainer.EventRegisterMovingUI += RegisterMovingUI;
         UIEventsContainer.EventUnregisterMovingUI += UnregisterMovingUI;
@@ -54,6 +59,11 @@ public class UIEventsUpdater : MonoBehaviour
     {
         _enterExitHandlers.Add(handler);
         _enterStates.Add(false);
+    }
+
+    public void AddPointerLocalPointHandler(IPointerLocalPointHandler handler)
+    {
+        _localPointHandlers.Add(handler);
     }
 
     private void RegisterMovingUI()
@@ -129,6 +139,19 @@ public class UIEventsUpdater : MonoBehaviour
                     _enterStates[i] = true;
                     handler.OnPointerEnter();
                 }
+            }
+        }
+
+        for (int i = 0; i < _localPointHandlers.Count; i++)
+        {
+            IPointerLocalPointHandler handler = _localPointHandlers[i];
+            if (handler.ShouldUpdateLocalPoint)
+            { 
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    handler.Rect, mousePos, null, out Vector2 localPoint
+                );
+
+                handler.UpdateLocalPoint(new Vector2Int((int)localPoint.x, (int)localPoint.y));
             }
         }
     }

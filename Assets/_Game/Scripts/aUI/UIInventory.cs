@@ -1,25 +1,25 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(Canvas))]
-public class UIInventory : MonoBehaviour
+public class UIInventory : MonoBehaviour, IPointerLocalPointHandler
 {
     [SerializeField]
-    private Vector2Int _tilesResolution;
+    private Vector2Int _gridResolution;
 
     [SerializeField]
-    private float _tileSize;
+    private int _tileSize;
 
     [SerializeField]
-    private Vector2 _gridSizeDelta;
+    private Vector2Int _gridSize;
 
     [SerializeField]
-    private RectTransform _tilesParent;
+    private Vector2Int _windowSize;
+
     [SerializeField]
     private RectTransform _itemsParent;
 
     [SerializeField]
-    private bool _shouldEmptyInventoryOnStart; 
+    private bool _shouldEmptyInventoryOnStart;
 
     [SerializeField]
     private UITile[] _tiles;
@@ -28,33 +28,45 @@ public class UIInventory : MonoBehaviour
 
     private HashSet<int> _inventoryTiles;
 
-    private Canvas _canvas;
+    private enum CursorLocationType
+    {
+        OnTile,
+        InsideWindow,
+        OutsideWindow
+    }
+    private CursorLocationType _cursorLocation;
 
     private UITile _tileUnderPointer;
     private UIStack _pushedOutByPlacementStack;
+
+    private RectTransform _inventoryWindow;
+    public RectTransform Rect { get { return _inventoryWindow; } }
+
+    private bool _shouldUpdateLocalPoint;
+    public bool ShouldUpdateLocalPoint { get { return _shouldUpdateLocalPoint; } }
 
     #region Editor
 #if UNITY_EDITOR
     public void AssignTiles(
         UITile[,] tilesArg, 
-        RectTransform tilesParentArg,
         RectTransform itemsParentArg,
-        float squareSizeArg,
-        Vector2 gridSizeDeltaArg)
+        int tileSizeArg,
+        Vector2Int gridSize,
+        Vector2Int borderWidthArg)
     {
-        _tilesResolution = new Vector2Int(tilesArg.GetLength(0), tilesArg.GetLength(1));
-        _tilesParent = tilesParentArg;
+        _gridResolution = new Vector2Int(tilesArg.GetLength(0), tilesArg.GetLength(1));
         _itemsParent = itemsParentArg;
 
-        _tileSize = squareSizeArg;
-        _gridSizeDelta = gridSizeDeltaArg;
+        _tileSize = tileSizeArg;
+        _gridSize = gridSize;
+        _windowSize = gridSize + borderWidthArg;
 
-        _tiles = new UITile[_tilesResolution.x * _tilesResolution.y];
-        for (int j = 0; j < _tilesResolution.y; j++)
+        _tiles = new UITile[_gridResolution.x * _gridResolution.y];
+        for (int j = 0; j < _gridResolution.y; j++)
         {
-            for (int i = 0; i < _tilesResolution.x; i++)
+            for (int i = 0; i < _gridResolution.x; i++)
             {
-                _tiles[j * _tilesResolution.x + i] = tilesArg[i, j];
+                _tiles[j * _gridResolution.x + i] = tilesArg[i, j];
             }
         }
     }
@@ -76,14 +88,13 @@ public class UIInventory : MonoBehaviour
         }
 #endif
 
-        TryGetComponent(out _canvas);
-        _canvas.enabled = false;
-
         _inventoryTiles = new HashSet<int>();
         for (int i = 0; i < _tiles.Length; i++)
         {
             _inventoryTiles.Add(_tiles[i].GetInstanceID());
         }
+
+        TryGetComponent(out _inventoryWindow);
 
         Subscribe();
     }
@@ -92,9 +103,6 @@ public class UIInventory : MonoBehaviour
     { 
         CraftingDelegatesContainer.FuncNewItemsPlacementIfPossible += OnNewItemsPlacementIfPossible;
         
-        CraftingDelegatesContainer.EventTileUnderPointerCame += OnTileUnderPointerCame;
-        CraftingDelegatesContainer.EventTileUnderPointerGone += OnTileUnderPointerGone;
-
         CraftingDelegatesContainer.EventStackShouldHighlight += OnStackShouldHighlight;
         CraftingDelegatesContainer.EventStackShouldDefault   += OnStackShouldDefault;
 
@@ -107,17 +115,12 @@ public class UIInventory : MonoBehaviour
         CraftingDelegatesContainer.EventStackWasSelected += OnStackWasSelected;
 
         CraftingDelegatesContainer.EventStackPlacementUnderPointer += OnStackPlacementUnderPointer;
-
-        InputDelegatesContainer.EventInventoryCommandTriggered += OnInventoryCommandTriggered;
     }
 
     private void OnDestroy()
     { 
         CraftingDelegatesContainer.FuncNewItemsPlacementIfPossible -= OnNewItemsPlacementIfPossible;
         
-        CraftingDelegatesContainer.EventTileUnderPointerCame -= OnTileUnderPointerCame;
-        CraftingDelegatesContainer.EventTileUnderPointerGone -= OnTileUnderPointerGone;
-
         CraftingDelegatesContainer.EventStackShouldHighlight -= OnStackShouldHighlight;
         CraftingDelegatesContainer.EventStackShouldDefault   -= OnStackShouldDefault;
 
@@ -130,8 +133,6 @@ public class UIInventory : MonoBehaviour
         CraftingDelegatesContainer.EventStackWasSelected -= OnStackWasSelected;
 
         CraftingDelegatesContainer.EventStackPlacementUnderPointer -= OnStackPlacementUnderPointer;
-
-        InputDelegatesContainer.EventInventoryCommandTriggered -= OnInventoryCommandTriggered;
     }
 
     private void Start()
@@ -153,18 +154,72 @@ public class UIInventory : MonoBehaviour
             }
             _itemStacks.Add(data.items[i], stacks);
         }
+
+        var updater = UIQueriesContainer.FuncGetUpdater();
+        updater.AddPointerLocalPointHandler(this);
     }
 
-
-    private void OnTileUnderPointerCame(UITile tile)
+    public void OnInventoryShow()
     {
-        if (!CheckIfTileInInventory(tile))
+        _shouldUpdateLocalPoint = true;
+    }
+
+    public void OnInventoryClose()
+    {
+        _shouldUpdateLocalPoint = false;
+    }
+
+    public void UpdateLocalPoint(in Vector2Int localPoint)
+    {
+        Debug.Log(localPoint + " // " + _gridSize + " // " + _tileSize);
+
+        if (localPoint.x < -_gridSize.x / 2 + 1 || localPoint.x > _gridSize.x / 2 - 1
+            ||
+            localPoint.y < -_gridSize.y / 2 + 1 || localPoint.y > _gridSize.y / 2 - 1)
         {
+            if (localPoint.x < -_windowSize.x / 2 || localPoint.x > _windowSize.x / 2
+                ||
+                localPoint.y < -_windowSize.y / 2 || localPoint.y > _windowSize.y / 2)
+            {
+                _cursorLocation = CursorLocationType.OutsideWindow;
+            }
+            else
+            {
+                _cursorLocation = CursorLocationType.InsideWindow;
+            }
+            if (_tileUnderPointer != null)
+            {
+                OnTileUnderPointerGone();
+            }
+            _tileUnderPointer = null;
             return;
         }
 
-        _tileUnderPointer = tile;
-        
+        _cursorLocation = CursorLocationType.OnTile;
+
+        int col = (localPoint.x + _gridSize.x / 2) / _tileSize;
+        int row = (-localPoint.y + _gridSize.y / 2) / _tileSize;
+
+        if (_tileUnderPointer != null)
+        {
+            if (_tileUnderPointer.Pos.x != col || _tileUnderPointer.Pos.y != row)
+            { 
+                OnTileUnderPointerGone();
+                _tileUnderPointer = _tiles[TileIndex(col, row)];
+                OnTileUnderPointerCame();
+            }
+        }
+        else
+        {
+            _tileUnderPointer = _tiles[TileIndex(col, row)];
+            OnTileUnderPointerCame();
+        }
+    }
+
+
+    private void OnTileUnderPointerCame()
+    {
+        CraftingDelegatesContainer.EventTileUnderPointerCame?.Invoke(_tileUnderPointer);
         if (CraftingDelegatesContainer.QueryIsStackSelected())
         {
             return;
@@ -175,19 +230,13 @@ public class UIInventory : MonoBehaviour
 
     private void OnTileUnderPointerGone()
     {
-        if (_tileUnderPointer == null)
-        {
-            return;
-        }
-
+        CraftingDelegatesContainer.EventTileUnderPointerGone?.Invoke();
         if (CraftingDelegatesContainer.QueryIsStackSelected())
         {
-            _tileUnderPointer = null;
             return;
         }
 
         _tileUnderPointer.DefaultState();
-        _tileUnderPointer = null;
     }
 
     private void OnStackShouldHighlight(UIStack stack)
@@ -213,8 +262,8 @@ public class UIInventory : MonoBehaviour
         foreach (var pos in tilesDelta)
         {
             Vector2Int tileIndex = tilePos + pos;
-            if (tileIndex.x >= _tilesResolution.x || 
-                tileIndex.y >= _tilesResolution.y ||
+            if (tileIndex.x >= _gridResolution.x || 
+                tileIndex.y >= _gridResolution.y ||
                 tileIndex.x < 0 ||
                 tileIndex.y < 0)
             {
@@ -288,31 +337,6 @@ public class UIInventory : MonoBehaviour
         FillTiles(stack);
     }
 
-    #region InvenotoryDisplay
-    // Places items based on topLeftCorner
-    private void OnInventoryCommandTriggered()
-    {
-        if (_canvas.enabled)
-        {
-            HideInventory();
-        }
-        else
-        {
-            ShowInventory();
-        }
-    }
-
-    private void HideInventory()
-    {
-        _canvas.enabled = false;
-    }
-
-    private void ShowInventory()
-    { 
-        _canvas.enabled = true;
-    }
-    #endregion
-
     private bool OnNewItemsPlacementIfPossible(ItemSO itemType, int amount)
     {
         int predictionAmount = amount;
@@ -341,9 +365,9 @@ public class UIInventory : MonoBehaviour
         }
 
         
-        for (int j = 0; j < _tilesResolution.y; j++)
+        for (int j = 0; j < _gridResolution.y; j++)
         {
-            for (int i = 0; i < _tilesResolution.x; i++)
+            for (int i = 0; i < _gridResolution.x; i++)
             {
                 Vector2Int tilePos = new Vector2Int(i, j);
                 if (CheckIfSizeFits(itemType.Size, tilePos))
@@ -421,8 +445,8 @@ public class UIInventory : MonoBehaviour
             for (int j = 0; j < size.y; j++)
             {
                 Vector2Int tileIndex = new Vector2Int(pos.x + i, pos.y + j);
-                if (tileIndex.x >= _tilesResolution.x ||
-                    tileIndex.y >= _tilesResolution.y)
+                if (tileIndex.x >= _gridResolution.x ||
+                    tileIndex.y >= _gridResolution.y)
                 {
                     return false;
                 }
@@ -524,12 +548,12 @@ public class UIInventory : MonoBehaviour
 
     private int TileIndex(int x, int y)
     {
-        return y * _tilesResolution.x + x;
+        return y * _gridResolution.x + x;
     }
 
     private int TileIndex(Vector2Int xy)
     {
-        return xy.y * _tilesResolution.x + xy.x;
+        return xy.y * _gridResolution.x + xy.x;
     }
 
     private bool CheckIfTileInInventory(UITile tile)

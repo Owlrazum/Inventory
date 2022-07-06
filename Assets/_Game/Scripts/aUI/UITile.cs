@@ -1,10 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
-using SNG.UI;
 
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
-public class UITile : MonoBehaviour, IPointerEnterExitHandler
+public class UITile : MonoBehaviour
 {
     [SerializeField]
     private UIStack _placedStack;
@@ -43,8 +42,6 @@ public class UITile : MonoBehaviour, IPointerEnterExitHandler
 
     private Image _image;
 
-    private bool _isStateControlledOutside;
-
     public void GenerationInitialize(Vector2Int posArg)
     {
         _pos = posArg;
@@ -58,31 +55,13 @@ public class UITile : MonoBehaviour, IPointerEnterExitHandler
         _placedStack = null;
     }
 
-    private void Start()
-    {
-        var updater = UIQueriesContainer.QueryGetUpdater();
-        updater.AddPointerEnterExitHandler(this);
-    }
-
-    public void OnPointerEnter()
-    {
-        CraftingDelegatesContainer.EventTileUnderPointerCame(this);
-    }
-
-    public void OnPointerExit()
-    {
-        CraftingDelegatesContainer.EventTileUnderPointerGone();
-    }
-
     public void HighLightState()
     {
-        _isStateControlledOutside = true;
         _image.sprite = _activeSprite;
     }
 
     public void DefaultState()
     { 
-        _isStateControlledOutside = false;
         _image.sprite = _defaultSprite;
     }
 
