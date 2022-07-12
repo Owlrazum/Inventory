@@ -1,24 +1,21 @@
-using System.Collections.Generic;
-
 using UnityEngine;
 
 public class PoolsController : MonoBehaviour
 {
-    [Header("Item Stacks UIStacks")]
-    [Space]
     [SerializeField]
     private UIStack _uiStackPrefab;
 
     [SerializeField]
-    private Transform _despawnedStacksParent;
+    private Item _itemPrefab;
 
     private ObjectPool<UIStack> _stacksPool;
+    // private ObjectPool<Item> _itemsPool;
 
     private void Awake()
     {
         _stacksPool = new ObjectPool<UIStack>(
             _uiStackPrefab.gameObject, 
-            _despawnedStacksParent,
+            null,
             10
         );
 
