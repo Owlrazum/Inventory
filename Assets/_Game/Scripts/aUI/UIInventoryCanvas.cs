@@ -13,8 +13,6 @@ public class UIInventoryCanvas : MonoBehaviour
         {
             Debug.LogError("Invenotry was not found!");
         }
-
-        // _canvas.enabled = false;
     }
 
     private void OnDestroy()

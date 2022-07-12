@@ -26,7 +26,7 @@ public class UIMainMenu : UIBaseFadingCanvas
 
         _state = State.Hided;
 
-        _settingsButton.EventOnClick += OnSettingsButtonPress;
+        _settingsButton.EventOnTouch += OnSettingsButtonPress;
     }
 
     private void OnDestroy()
@@ -34,7 +34,7 @@ public class UIMainMenu : UIBaseFadingCanvas
         UIEventsContainer.EscapePressed -= OnEscapePressed;
         UIEventsContainer.EventSettingsExit -= OnSettingsExit;
         
-        _settingsButton.EventOnClick -= OnSettingsButtonPress;
+        _settingsButton.EventOnTouch -= OnSettingsButtonPress;
     }
 
     private void OnEscapePressed()

@@ -16,7 +16,7 @@ public class UISettingsCanvas : UIBaseFadingCanvas
             UIEventsContainer.EventBuildLog("The first child should be goback button");
         }
 
-        _goBackButton.EventOnClick += OnGoBackPress;
+        _goBackButton.EventOnTouch += OnGoBackPress;
     }
 
     private void OnDestroy()
@@ -24,7 +24,7 @@ public class UISettingsCanvas : UIBaseFadingCanvas
         UIEventsContainer.EventSettingsEnter -= OnSettingsEnter;
         UIEventsContainer.EventSettingsExit -= OnSettingsExit;
 
-        _goBackButton.EventOnClick -= OnGoBackPress;
+        _goBackButton.EventOnTouch -= OnGoBackPress;
 
         if (_isEnteredSettings)
         {

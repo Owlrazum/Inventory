@@ -32,7 +32,7 @@ public class UIStackData
 
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
-public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler, IPointerEnterExitHandler
+public class UIStack : MonoBehaviour, IPoolable, IPointerTouchHandler, IPointerEnterExitHandler
 {
     public UIStackData StackData { get; private set; }
     public RectTransform BoundingRect { get; private set; }
@@ -129,7 +129,7 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler, IPointerE
 
     private void Start()
     {
-        UIQueriesContainer.QueryGetUpdater().AddPointerClickHandler(this);
+        UIQueriesContainer.QueryGetUpdater().AddPointerTouchHandler(this);
         UIQueriesContainer.QueryGetUpdater().AddPointerEnterExitHandler(this);
     }
 
@@ -163,7 +163,7 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler, IPointerE
         return _fillState;
     }
 
-    public void OnPointerClick(MouseButtonType pressedButton)
+    public void OnPointerTouch()
     {
         if (CraftingDelegatesContainer.QueryIsStackSelected())
         {
@@ -171,25 +171,6 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerClickHandler, IPointerE
         }
 
         CraftingDelegatesContainer.EventStackWasSelected?.Invoke(this);
-
-        switch(pressedButton)
-        {
-            case MouseButtonType.Left:
-                OnLeftClick();
-                break;
-            case MouseButtonType.Right:
-                OnRightClick();
-                break;
-        }
-    }
-
-    private void OnLeftClick()
-    {
-    }
-
-    private void OnRightClick()
-    { 
-
     }
 
     public void OnPointerEnter()

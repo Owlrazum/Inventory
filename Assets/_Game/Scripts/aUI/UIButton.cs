@@ -4,7 +4,7 @@ using UnityEngine;
 using SNG.UI;
 
 [RequireComponent(typeof(RectTransform))]
-public class UIButton : MonoBehaviour, IPointerClickHandler
+public class UIButton : MonoBehaviour, IPointerTouchHandler
 {
     private RectTransform _rect;
     public RectTransform Rect { get { return _rect; } }
@@ -16,13 +16,13 @@ public class UIButton : MonoBehaviour, IPointerClickHandler
 
     private void Start()
     {
-        UIQueriesContainer.QueryGetUpdater().AddPointerClickHandler(this);
+        UIQueriesContainer.QueryGetUpdater().AddPointerTouchHandler(this);
     }
 
-    public virtual void OnPointerClick(MouseButtonType pressedButton)
+    public virtual void OnPointerTouch()
     {
-        EventOnClick?.Invoke();
+        EventOnTouch?.Invoke();
     }
 
-    public Action EventOnClick { get; set; }
+    public Action EventOnTouch { get; set; }
 }

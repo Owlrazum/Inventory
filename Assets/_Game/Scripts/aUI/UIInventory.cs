@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using SNG.UI;
+
 public class UIInventory : MonoBehaviour, IPointerLocalPointHandler
 {
     [SerializeField]
@@ -96,6 +98,8 @@ public class UIInventory : MonoBehaviour, IPointerLocalPointHandler
 
         TryGetComponent(out _inventoryWindow);
 
+        _shouldUpdateLocalPoint = true;
+
         Subscribe();
     }
 
@@ -137,6 +141,9 @@ public class UIInventory : MonoBehaviour, IPointerLocalPointHandler
 
     private void Start()
     {
+        var updater = UIQueriesContainer.FuncGetUpdater();
+        updater.AddPointerLocalPointHandler(this);
+
         _itemStacks = new Dictionary<int, Dictionary<int, UIStack>>();
         var data = SaveSystem.LoadInvenoryData();
         if (data == null)
@@ -154,14 +161,11 @@ public class UIInventory : MonoBehaviour, IPointerLocalPointHandler
             }
             _itemStacks.Add(data.items[i], stacks);
         }
-
-        var updater = UIQueriesContainer.FuncGetUpdater();
-        updater.AddPointerLocalPointHandler(this);
     }
 
     public void UpdateLocalPoint(in Vector2Int localPoint)
     {
-        Debug.Log(localPoint + " // " + _gridSize + " // " + _tileSize);
+        // Debug.Log(localPoint + " // " + _gridSize + " // " + _tileSize);
 
         if (localPoint.x < -_gridSize.x / 2 + 1 || localPoint.x > _gridSize.x / 2 - 1
             ||

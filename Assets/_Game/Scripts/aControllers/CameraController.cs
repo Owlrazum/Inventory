@@ -8,11 +8,12 @@ public class CameraController : MonoBehaviour
     private void Awake()
     {
         QueriesContainer.FuncTransformDirectionFromCameraSpace += TransformDirectionFromCameraSpace;
+        QueriesContainer.FuncTransformScreenPosToWorldPos += TransformScreenPosToWorldPos;
     }
 
     private void OnDestroy()
     {
-        QueriesContainer.FuncTransformDirectionFromCameraSpace -= TransformDirectionFromCameraSpace;
+        QueriesContainer.FuncTransformScreenPosToWorldPos -= TransformScreenPosToWorldPos;
     }
 
     private Vector3 TransformDirectionFromCameraSpace(Vector3 input)
@@ -20,5 +21,10 @@ public class CameraController : MonoBehaviour
         input = _renderingCamera.transform.TransformDirection(input);
         input.y = 0;
         return input;
+    }
+
+    private Vector3 TransformScreenPosToWorldPos(Vector3 input)
+    {
+        return _renderingCamera.ScreenToWorldPoint(input);
     }
 }

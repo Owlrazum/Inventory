@@ -18,19 +18,19 @@ public class UICraft : MonoBehaviour
         transform.GetChild(0).TryGetComponent(out _craftButton);
         transform.GetChild(1).TryGetComponent(out _selectButton);
 
-        _selectButton.EventOnClick += OnItemSelect;
+        _selectButton.EventOnTouch += OnItemSelect;
         // _craftButton.interactable = true;
     }
 
     private void OnDestroy()
     {
-        _craftButton.EventOnClick -= OnCraftApproved;
-        _selectButton.EventOnClick -= OnItemSelect;
+        _craftButton.EventOnTouch -= OnCraftApproved;
+        _selectButton.EventOnTouch -= OnItemSelect;
     }
 
     private void OnItemSelect()
     { 
-        _craftButton.EventOnClick += OnCraftApproved;
+        _craftButton.EventOnTouch += OnCraftApproved;
         // _craftButton.interactable = true;
     }
 

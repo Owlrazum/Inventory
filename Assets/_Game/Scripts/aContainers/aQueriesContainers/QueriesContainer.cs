@@ -28,4 +28,17 @@ public static class QueriesContainer
 
         return FuncTransformDirectionFromCameraSpace.Invoke(input);
     }
+
+    public static Func<Vector3, Vector3> FuncTransformScreenPosToWorldPos;
+    public static Vector3 QueryTransformScreenPosToWorldPos(in Vector3 input)
+    { 
+#if UNITY_EDITOR
+        if (FuncTransformScreenPosToWorldPos.GetInvocationList().Length != 1)
+        {
+            throw new NotSupportedException("There should be only one subscription");
+        }
+#endif
+
+        return FuncTransformScreenPosToWorldPos.Invoke(input);
+    }
 }

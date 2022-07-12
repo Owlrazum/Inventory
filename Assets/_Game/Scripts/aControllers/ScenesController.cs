@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+using SNG.UI;
+
 public class ScenesController : MonoBehaviour
 {
 #if UNITY_EDITOR
