@@ -5,11 +5,7 @@ public class PoolsController : MonoBehaviour
     [SerializeField]
     private UIStack _uiStackPrefab;
 
-    [SerializeField]
-    private Item _itemPrefab;
-
     private ObjectPool<UIStack> _stacksPool;
-    // private ObjectPool<Item> _itemsPool;
 
     private void Awake()
     {

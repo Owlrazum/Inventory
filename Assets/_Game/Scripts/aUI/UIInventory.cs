@@ -159,16 +159,6 @@ public class UIInventory : MonoBehaviour, IPointerLocalPointHandler
         updater.AddPointerLocalPointHandler(this);
     }
 
-    public void OnInventoryShow()
-    {
-        _shouldUpdateLocalPoint = true;
-    }
-
-    public void OnInventoryClose()
-    {
-        _shouldUpdateLocalPoint = false;
-    }
-
     public void UpdateLocalPoint(in Vector2Int localPoint)
     {
         Debug.Log(localPoint + " // " + _gridSize + " // " + _tileSize);
