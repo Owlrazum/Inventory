@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "IngredientsList", menuName = "ScriptableObjects/Crafting/IngredientsList", order = 1)]
+[CreateAssetMenu(fileName = "GlobalItemList", menuName = "Crafting/GlobalItemList", order = 1)]
 public class ItemsListSO : ScriptableObject
 {
     [SerializeField]

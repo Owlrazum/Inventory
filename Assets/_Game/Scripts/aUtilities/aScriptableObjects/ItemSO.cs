@@ -1,23 +1,36 @@
 using System;
+
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Ingredient", menuName = "ScriptableObjects/Crafting/Ingredient", order = 1)]
+public enum RecipeQualityType
+{ 
+    Perfect,
+    Good,
+    Bad
+}
+
+[CreateAssetMenu(fileName = "Item", menuName = "Crafting/Item", order = 1)]
 public class ItemSO : ScriptableObject
 {
     public int ID;
 
     public Sprite Sprite;
     public Vector2Int Size = Vector2Int.one;
-    public int StackCapacity = 1;
+
+    // Craft requirement assumes that zero pos is top left corner
+
+    public RecipeItemLocation[] PerfectItemsData;
+    public RecipeItemLocation[] FirstGoodItemsData;
+    public RecipeItemLocation[] SecondGoodItemsData;
+    public RecipeItemLocation[] FirstBadItemsData;
+    public RecipeItemLocation[] SecondBadItemsData;
 
     [Serializable]
-    public struct CraftRequirement
-    {
+    public class RecipeItemLocation
+    { 
         public int ID;
-        public int Count;
+        public Vector2Int Pos;
     }
-
-    public CraftRequirement[] CraftRequirements;
 
     public override bool Equals(object other)
     {

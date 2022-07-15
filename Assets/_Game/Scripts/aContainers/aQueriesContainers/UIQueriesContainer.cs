@@ -19,8 +19,13 @@ namespace SNG.UI
 
         public static Func<UIEventsUpdater> FuncGetUpdater;
         public static UIEventsUpdater QueryGetUpdater()
-        { 
-    #if UNITY_EDITOR
+        {
+#if UNITY_EDITOR
+            if (FuncGetUpdater == null)
+            {
+                return null;
+            }
+            
             if (FuncGetUpdater.GetInvocationList().Length != 1)
             {
                 throw new NotSupportedException("There should be only one subscription");

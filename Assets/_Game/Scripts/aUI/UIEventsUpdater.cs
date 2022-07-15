@@ -8,14 +8,11 @@ namespace SNG.UI
         private const float SQR_MAGNITUDE_POINTER_TOUCH_TOLERANCE = 10;
 
         [SerializeField]
-        private float _offset;
+        private float _offset = 1;
 
-        private List<IPointerTouchHandler> _touchHandlers;
-
-        private List<IPointerEnterExitHandler> _enterExitHandlers;
-        private List<bool> _enterStates;
-
-        private List<IPointerLocalPointHandler> _localPointHandlers;
+        private Dictionary<int, IPointerTouchHandler> _touchHandlers;
+        private Dictionary<int, IPointerEnterExitHandler> _enterExitHandlers;
+        private Dictionary<int, IPointerLocalPointHandler> _localPointHandlers;
 
         private int _movingUICount = 0;
         private int _finishedMovingUICount = 0;
@@ -30,12 +27,9 @@ namespace SNG.UI
 
         private void Awake()
         {
-            _touchHandlers = new List<IPointerTouchHandler>();
-            
-            _enterExitHandlers = new List<IPointerEnterExitHandler>();
-            _enterStates = new List<bool>();
-            
-            _localPointHandlers = new List<IPointerLocalPointHandler>();
+            _touchHandlers      = new Dictionary<int, IPointerTouchHandler>();
+            _enterExitHandlers  = new Dictionary<int, IPointerEnterExitHandler>();
+            _localPointHandlers = new Dictionary<int, IPointerLocalPointHandler>();
 
             UIEventsContainer.EventRegisterMovingUI += RegisterMovingUI;
             UIEventsContainer.EventUnregisterMovingUI += UnregisterMovingUI;
@@ -51,22 +45,42 @@ namespace SNG.UI
             UIEventsContainer.EventMovingUIFinishedMove -= OnMovingUIFinishedMove;
 
             UIQueriesContainer.FuncGetUpdater -= GetUpdater;
+
+            _touchHandlers.Clear();
+            _enterExitHandlers.Clear();
+            _localPointHandlers.Clear();
         }
 
         public void AddPointerTouchHandler(IPointerTouchHandler handler)
         {
-            _touchHandlers.Add(handler);
+            _touchHandlers.Add(handler.InstanceID, handler);
         }
 
         public void AddPointerEnterExitHandler(IPointerEnterExitHandler handler)
         {
-            _enterExitHandlers.Add(handler);
-            _enterStates.Add(false);
+            handler.EnterState = false;
+            _enterExitHandlers.Add(handler.InstanceID, handler);
         }
 
         public void AddPointerLocalPointHandler(IPointerLocalPointHandler handler)
         {
-            _localPointHandlers.Add(handler);
+            _localPointHandlers.Add(handler.InstanceID, handler);
+        }
+
+        public void RemovePointerTouchHandler(IPointerTouchHandler handler)
+        {
+            _touchHandlers.Remove(handler.InstanceID);
+        }
+
+        public void RemovePointerEnterExitHandler(IPointerEnterExitHandler handler)
+        {
+            handler.EnterState = false;
+            _enterExitHandlers.Remove(handler.InstanceID);
+        }
+
+        public void RemovePointerLocalPointHandler(IPointerLocalPointHandler handler)
+        {
+            _localPointHandlers.Remove(handler.InstanceID);
         }
 
         private void RegisterMovingUI()
@@ -144,6 +158,7 @@ namespace SNG.UI
 #if UNITY_EDITOR
             if (Input.GetMouseButtonUp(0))
             {
+                print("up");
 #elif UNITY_ANDROID
             if (_currentTouch.phase == TouchPhase.Ended || _currentTouch.phase == TouchPhase.Canceled)
             {
@@ -151,6 +166,7 @@ namespace SNG.UI
                 if (_isBeganTouchValid)
                 {
                     NotifyOnePointerTouchIfNeeded();
+                    _isBeganTouchValid = false;
                 }
                 else
                 { 
@@ -166,8 +182,9 @@ namespace SNG.UI
 
         private void NotifyOnePointerTouchIfNeeded()
         { 
-            foreach (var handler in _touchHandlers)
+            foreach (var pair in _touchHandlers)
             {
+                var handler = pair.Value;
 #if UNITY_EDITOR
                 if (RectTransformUtility.RectangleContainsScreenPoint(handler.Rect, _currentMousePos))
 #elif UNITY_ANDROID
@@ -182,9 +199,9 @@ namespace SNG.UI
 
         private void NotifyManyPointerExitIfNeeded()
         {
-            for (int i = 0; i < _enterExitHandlers.Count; i++)
+            foreach (var pair in _enterExitHandlers)
             {
-                IPointerEnterExitHandler handler = _enterExitHandlers[i];
+                var handler = pair.Value;
 #if UNITY_EDITOR
                 if (!RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect, 
                     _currentMousePos, null, Vector4.one * _offset))
@@ -193,9 +210,9 @@ namespace SNG.UI
                     _currentTouch.position, null, Vector4.one * _offset))
 #endif
                 {
-                    if (_enterStates[i])
+                    if (handler.EnterState)
                     {
-                        _enterStates[i] = false;
+                        handler.EnterState = false;
                         handler.OnPointerExit();
                     }
                 }
@@ -204,21 +221,22 @@ namespace SNG.UI
 
         private void NotyfyManyPointerExitWithNoTouchPos()
         { 
-            for (int i = 0; i < _enterExitHandlers.Count; i++)
+            foreach (var pair in _enterExitHandlers)
             {
-                if (_enterStates[i])
+                var handler = pair.Value;
+                if (handler.EnterState)
                 {
-                    _enterStates[i] = false;
-                    _enterExitHandlers[i].OnPointerExit();
+                    handler.EnterState = false;
+                    handler.OnPointerExit();
                 }
             }            
         }
 
         private void NotifyManyPointerEnterIfNeeded()
         { 
-            for (int i = 0; i < _enterExitHandlers.Count; i++)
+            foreach (var pair in _enterExitHandlers)
             {
-                IPointerEnterExitHandler handler = _enterExitHandlers[i];
+                var handler = pair.Value;
 #if UNITY_EDITOR
                 if (RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect, 
                     _currentMousePos, null, Vector4.one * _offset))
@@ -227,9 +245,9 @@ namespace SNG.UI
                      _currentTouch.position, null, Vector4.one * _offset))
 #endif
                 {
-                    if (!_enterStates[i])
+                    if (!handler.EnterState)
                     {
-                        _enterStates[i] = true;
+                        handler.EnterState = true;
                         handler.OnPointerEnter();
                     }
                 }
@@ -238,9 +256,9 @@ namespace SNG.UI
 
         private void NotifyLocalPointUpdateIfNeeded()
         { 
-            for (int i = 0; i < _localPointHandlers.Count; i++)
+            foreach (var pair in _localPointHandlers)
             {
-                IPointerLocalPointHandler handler = _localPointHandlers[i];
+                var handler = pair.Value;
                 if (handler.ShouldUpdateLocalPoint)
                 {
 #if UNITY_EDITOR

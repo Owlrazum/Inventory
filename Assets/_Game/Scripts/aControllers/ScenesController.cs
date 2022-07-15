@@ -15,17 +15,20 @@ public class ScenesController : MonoBehaviour
 
     private void Awake()
     {
+        _currentSceneIndex = 0;
+
+        EventsContainer.ShouldLoadNextScene += LoadNextScene;
         EventsContainer.ShouldStartLoadingNextScene += StartLoadingNextScene;
 
         UIEventsContainer.EventExitToMainMenuPressed += LoadMainMenuScene;
         UIEventsContainer.EventContinueButtonPressed += FinishLoadingScene;
 
         UIQueriesContainer.FuncSceneLoadingProgress += GetSceneLoadingProgress;
-        StartLoadingSavedScene();
     }
 
     private void OnDestroy()
     { 
+        EventsContainer.ShouldLoadNextScene -= LoadNextScene;
         EventsContainer.ShouldStartLoadingNextScene -= StartLoadingNextScene;
 
         UIEventsContainer.EventExitToMainMenuPressed -= LoadMainMenuScene;
@@ -34,26 +37,14 @@ public class ScenesController : MonoBehaviour
         UIQueriesContainer.FuncSceneLoadingProgress -= GetSceneLoadingProgress;
     }
 
+    private void LoadNextScene()
+    {
+        SceneManager.LoadScene(++_currentSceneIndex);
+    }
+
     private void StartLoadingNextScene()
     { 
         _loadingScene = SceneManager.LoadSceneAsync(++_currentSceneIndex);
-        EventsContainer.EventStartedLoadingNextScene?.Invoke();
-    }
-
-    private void StartLoadingSavedScene()
-    { 
-#if UNITY_EDITOR
-        _loadingScene = SceneManager.LoadSceneAsync(_sceneIndexToTest);
-        EventsContainer.EventStartedLoadingNextScene?.Invoke();
-        return;
-#endif
-        int _currentSceneIndex = PlayerPrefs.GetInt(PlayerPrefsContainer.LAST_SCENE_INDEX, -1);
-        if (_currentSceneIndex < 0)
-        {
-            Debug.LogError("Incorrect player pref");
-        }
-
-        _loadingScene = SceneManager.LoadSceneAsync(_currentSceneIndex);
         EventsContainer.EventStartedLoadingNextScene?.Invoke();
     }
 

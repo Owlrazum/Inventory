@@ -104,6 +104,10 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerTouchHandler, IPointerE
 
     private RectTransform _interactionRect;
     public RectTransform InteractionRect { get { return _interactionRect; } }
+    public int InstanceID { get { return GetInstanceID(); } }
+
+    private bool _enterState;
+    public bool EnterState { get { return _enterState; } set { _enterState = value; } }
 
     private Image _image;
     private TextMeshProUGUI _textMesh;

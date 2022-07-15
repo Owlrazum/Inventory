@@ -5,5 +5,6 @@ namespace SNG.UI
     {
         public void OnPointerTouch();
         public RectTransform Rect { get; }
+        public int InstanceID { get; }
     }
 }

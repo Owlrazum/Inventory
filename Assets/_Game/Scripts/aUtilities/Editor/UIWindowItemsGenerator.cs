@@ -2,32 +2,32 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UIInventoryGridGeneratorWindow : EditorWindow
+public class UIWindowItemsGenerator : EditorWindow
 {
-    private Vector2Int _referenceScreenRes = new Vector2Int(1920, 1080);
+    private Vector2Int _referenceScreenRes = new Vector2Int(1080, 1920);
 
     private int _deltaPos = 0;
     private int _tileSize = 100;
     private int _rowCount = 5;
-    private int _colCount = 8;
+    private int _colCount = 3;
 
     private GameObject _tilePrefab;
     private Transform _canvasParent;
     private Vector2Int _inventoryWindowBorderWidth = new Vector2Int(5, 10);
 
-    [MenuItem("Window/Custom/GenerateInventoryWindow")]
+    [MenuItem("Window/Custom/GenerateItemsWindow")]
     private static void Init()
     {
-        UIInventoryGridGeneratorWindow window = 
-            (UIInventoryGridGeneratorWindow)EditorWindow.GetWindow(
-                typeof(UIInventoryGridGeneratorWindow));
+        UIWindowItemsGenerator window = 
+            (UIWindowItemsGenerator)EditorWindow.GetWindow(
+                typeof(UIWindowItemsGenerator));
 
         window.Show();
     }
 
     private void OnGUI()
     { 
-        EditorGUILayout.LabelField("Generate inventory window gb and child it to UI Transform parent");
+        EditorGUILayout.LabelField("Generate items window gb and child it to UI Transform parent");
         _referenceScreenRes = EditorGUILayout.Vector2IntField("ScreenResolution", _referenceScreenRes);
         EditorGUILayout.Separator();
 
@@ -61,7 +61,7 @@ public class UIInventoryGridGeneratorWindow : EditorWindow
 
         Vector2Int gridSize = new Vector2Int(_colCount * _tileSize, _rowCount *_tileSize);
 
-        GameObject canvasGb = new GameObject("InventoryCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(UIInventoryCanvas));
+        GameObject canvasGb = new GameObject("ItemsWindowCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GameCanvas));
         canvasGb.transform.SetParent(_canvasParent, false);
 
         canvasGb.TryGetComponent(out Canvas canvas);
@@ -70,7 +70,7 @@ public class UIInventoryGridGeneratorWindow : EditorWindow
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = _referenceScreenRes;
 
-        GameObject inventoryWindow = new GameObject("InventoryWindow", typeof(RectTransform));
+        GameObject inventoryWindow = new GameObject("ItemsTotalWindow", typeof(RectTransform));
         inventoryWindow.transform.SetParent(canvasGb.transform, false);
         inventoryWindow.TryGetComponent(out RectTransform inventoryWindowRect);
         inventoryWindowRect.anchorMin = Vector2.one * 0.5f;
@@ -110,7 +110,7 @@ public class UIInventoryGridGeneratorWindow : EditorWindow
             rowStartTilePos = tilePos;
         }
 
-        if (inventoryContainer.TryGetComponent(out UIInventory inventory))
+        if (inventoryContainer.TryGetComponent(out UIWindowCraft inventory))
         {
             inventory.AssignTiles(generatedTiles, itemsParent, _tileSize, gridSize, _inventoryWindowBorderWidth);
         }
@@ -118,7 +118,7 @@ public class UIInventoryGridGeneratorWindow : EditorWindow
 
     private RectTransform CreateInventoryContainer(string name, Transform inventoryWindowTransform)
     { 
-        GameObject gb = new GameObject(name, typeof(RectTransform), typeof(UIInventory));
+        GameObject gb = new GameObject(name, typeof(RectTransform), typeof(UIWindowCraft));
         gb.transform.SetParent(inventoryWindowTransform, false);
         gb.TryGetComponent(out RectTransform tilesParentRect);
         tilesParentRect.anchorMin = Vector2.zero;
