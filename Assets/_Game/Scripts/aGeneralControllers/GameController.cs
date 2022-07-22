@@ -15,6 +15,9 @@ public class GameController : MonoBehaviour
     [SerializeField]
     private GameDesciptionSO _gameDesc;
 
+    [SerializeField]
+    private ItemsListSO _itemList;
+
     private GameStateType _gameState;
 
     private int _currentLevel = 0;
@@ -22,6 +25,8 @@ public class GameController : MonoBehaviour
     private void Awake()
     {
         GameDelegatesContainer.GetGameState += GetGameState;
+        CraftingDelegatesContainer.GetItemSO += GetItemSO;
+
         InputDelegatesContainer.StartGameCommand += OnStartGameCommand;
         InputDelegatesContainer.ExitToMainMenuCommand += OnExitToMainMenuCommand;
         DontDestroyOnLoad(gameObject);
@@ -30,6 +35,8 @@ public class GameController : MonoBehaviour
     private void OnDestroy()
     {
         GameDelegatesContainer.GetGameState -= GetGameState;
+        CraftingDelegatesContainer.GetItemSO -= GetItemSO;
+
         InputDelegatesContainer.StartGameCommand -= OnStartGameCommand;
         InputDelegatesContainer.ExitToMainMenuCommand -= OnExitToMainMenuCommand;
     }
@@ -49,6 +56,11 @@ public class GameController : MonoBehaviour
     private GameStateType GetGameState()
     {
         return _gameState;
+    }
+
+    private ItemSO GetItemSO(int itemID)
+    {
+        return _itemList.Data[itemID];
     }
 
     private void OnStartGameCommand()

@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5655ab5e787f483481798042d4e4fc0, type: 3}
   m_Name: GameDescription
   m_EditorClassIdentifier: 
-  GameSequence:
+  Levels:
   - {fileID: 11400000, guid: feb196b927a2f4911b287b6f5f59d742, type: 2}

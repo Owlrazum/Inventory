@@ -1085,7 +1085,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1d14594904e747a6878360587cd7389, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _gameDescription: {fileID: 11400000, guid: dcb85cafc2d8243de814c6af9488acb3, type: 2}
+  _sceneIndexToTest: -1
+  _gameDesc: {fileID: 11400000, guid: dcb85cafc2d8243de814c6af9488acb3, type: 2}
   _itemList: {fileID: 11400000, guid: 66830bddfadae4c21ba58fa77db03a22, type: 2}
 --- !u!114 &1961987797
 MonoBehaviour:
@@ -1112,7 +1113,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53786516aaf084be6b5395d3faeaba77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _sceneIndexToTest: 0
 --- !u!114 &1961987799
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1204,11 +1204,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1961987794}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f2b3fc94ce1554b51b82263617bc4861, type: 3}
+  m_Script: {fileID: 11500000, guid: be0340a4bd2ab484290f0d74dd6e0e83, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _uiStackPrefab: {fileID: 1141457760081112908, guid: 58f2dee471663461eb96fbf625949531,
-    type: 3}
+  _prefab: {fileID: 1141457760081112908, guid: 58f2dee471663461eb96fbf625949531, type: 3}
 --- !u!1001 &7864857199224330054
 PrefabInstance:
   m_ObjectHideFlags: 0

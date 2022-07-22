@@ -3,19 +3,19 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "GlobalItemList", menuName = "Crafting/GlobalItemList", order = 1)]
 public class ItemsListSO : ScriptableObject
 {
-    public ItemSO[] Items;
+    public ItemSO[] Data;
 
     public void AssignIDs()
     {
-        for (int i = 0; i < Items.Length; i++)
+        for (int i = 0; i < Data.Length; i++)
         {
-            Items[i].ID = i;
-            Debug.Log("Assigned " + i + " to " + Items[i].name);
+            Data[i].ID = i;
+            Debug.Log("Assigned " + i + " to " + Data[i].name);
         }
     }
 
     public ItemSO GetItem(int id)
     {
-        return Items[id];
+        return Data[id];
     }
 }
