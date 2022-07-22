@@ -58,7 +58,7 @@ public class SaveSystem
             data.stacksData.Add(new StackDataListWrapper(new List<UIStackData>()));
             foreach (var uiStackPair in itemStackPair.Value)
             {
-                data.stacksData[stackCounter].Add(uiStackPair.Value.StackData);
+                data.stacksData[stackCounter].Add(uiStackPair.Value.Data);
             }
             stackCounter++;
         }

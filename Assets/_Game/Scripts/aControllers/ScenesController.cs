@@ -39,7 +39,8 @@ public class ScenesController : MonoBehaviour
 
     private void LoadNextScene()
     {
-        SceneManager.LoadScene(++_currentSceneIndex);
+        _currentSceneIndex++;
+        SceneManager.LoadScene(_currentSceneIndex);
     }
 
     private void StartLoadingNextScene()

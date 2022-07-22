@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,39 +10,67 @@ using SNG.UI;
 
 [System.Serializable]
 public class UIStackData
-{ 
-    public int ItemAmount;
+{
+    [SerializeField]
+    private int _itemAmount;
+    public int ItemAmount
+    {
+        get { return _itemAmount; }
+        set
+        {
+            _itemAmount = value;
+            EventItemAmountChanged?.Invoke();
+        }
+    }
     public int ItemTypeID;
     
     [SerializeField]
     private Vector2Int _tilePos;
-
     public Vector2Int TilePos
     {
         get { return _tilePos; }
         set
         {
             _tilePos = value;
-            TilePosEventChanged?.Invoke();
+            EventTilePosChanged?.Invoke();
         }
     }
 
     [NonSerialized]
-    public Action TilePosEventChanged;
+    public int TileInstanceID;
+
+    [NonSerialized]
+    public Action EventTilePosChanged;
+
+    [NonSerialized]
+    public Action EventItemAmountChanged;
+
+
+    public static UIStackData TakeOne(UIStackData copyFrom)
+    {
+        copyFrom.ItemAmount--;
+        UIStackData stackData = new UIStackData();
+
+        stackData.ItemAmount = 1;
+        stackData.ItemTypeID = copyFrom.ItemTypeID;
+        stackData._tilePos = copyFrom.TilePos;
+        stackData.TileInstanceID = copyFrom.TileInstanceID;
+        return stackData;
+    }
 }
+
+// LastPoint: Returning to its place, ItemType get private set
 
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
 public class UIStack : MonoBehaviour, IPoolable, IPointerTouchHandler, IPointerEnterExitHandler
 {
-    public UIStackData StackData { get; private set; }
+    public UIStackData Data { get; private set; }
     public RectTransform BoundingRect { get; private set; }
 
     private ItemSO _itemSO;
-    public ItemSO ItemType
-    {
-        get
-        {
+    public ItemSO ItemType {
+        get{
             return _itemSO;
         }
     }
@@ -56,22 +85,23 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerTouchHandler, IPointerE
 
     public void InitializeWithData(UIStackData stackData, RectTransform boundingRect)
     {
-        StackData = stackData;
+        Data = stackData;
         BoundingRect = boundingRect;
 
         _itemSO = CraftingDelegatesContainer.FuncGetItemSO(stackData.ItemTypeID);
         _fillState = new Vector2Int[_itemSO.Size.x * _itemSO.Size.y];
         _shouldUpdateFillState = true;
-        StackData.TilePosEventChanged += OnTilePosChanged;
+        Data.EventTilePosChanged += OnTilePosChanged;
+        Data.EventItemAmountChanged += OnItemAmountChanged;
 
         _image.sprite = _itemSO.Sprite;
-        if (StackData.ItemAmount == 1)
+        if (Data.ItemAmount == 1)
         {
             _textMesh.text = "";
         }
         else
         {
-            _textMesh.text = StackData.ItemAmount.ToString();
+            _textMesh.text = Data.ItemAmount.ToString();
         }
 
 
@@ -83,8 +113,9 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerTouchHandler, IPointerE
     public void Despawn()
     {
         gameObject.SetActive(false);
-        StackData.TilePosEventChanged -= OnTilePosChanged;
-        StackData = null;
+        Data.EventTilePosChanged -= OnTilePosChanged;
+        Data.EventItemAmountChanged -= OnItemAmountChanged;
+        Data = null;
         PoolingDelegatesContainer.EventDespawnUIStack(this);
     }
 
@@ -93,10 +124,23 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerTouchHandler, IPointerE
         _shouldUpdateFillState = true;
     }
 
-    public void UpdateRect(Vector2 anchoredPos, Vector2 sizeDelta)
+    private void OnItemAmountChanged()
+    { 
+        if (Data.ItemAmount == 1)
+        {
+            _textMesh.text = "";
+        }
+        else
+        {
+            _textMesh.text = Data.ItemAmount.ToString();
+        }
+    }
+
+    public void UpdateRect(Vector2 anchoredPos, Vector2 sizeDelta, RectTransform newParent = null)
     {
         _rect.anchoredPosition = anchoredPos;
         _rect.sizeDelta = sizeDelta;
+        _rect.SetParent(newParent, false);
     }
 
     private RectTransform _rect;
@@ -143,10 +187,21 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerTouchHandler, IPointerE
 
     private void OnDestroy()
     {
-        if (StackData != null)
+        if (Data != null)
         { 
-            StackData.TilePosEventChanged -= OnTilePosChanged;
+            Data.EventTilePosChanged -= OnTilePosChanged;
+            Data.EventItemAmountChanged -= OnItemAmountChanged;
         }
+    }
+
+    public void ReturnToItsPlace(Vector2 anchPos)
+    {
+        StartCoroutine(ReturnalSequence(anchPos));
+    }
+
+    private IEnumerator ReturnalSequence(Vector2 anchPos)
+    {
+        yield return null;
     }
 
     public Vector2Int[] GetFillState()
@@ -154,9 +209,9 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerTouchHandler, IPointerE
         if (_shouldUpdateFillState)
         { 
             int indexer = 0;
-            for (int j = StackData.TilePos.y; j < StackData.TilePos.y + _itemSO.Size.y; j++)
+            for (int j = Data.TilePos.y; j < Data.TilePos.y + _itemSO.Size.y; j++)
             {
-                for (int i = StackData.TilePos.x; i < StackData.TilePos.x + _itemSO.Size.x; i++)
+                for (int i = Data.TilePos.x; i < Data.TilePos.x + _itemSO.Size.x; i++)
                 {
                     _fillState[indexer++] = new Vector2Int(i, j);
                 }

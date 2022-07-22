@@ -11,7 +11,7 @@ public class PoolsController : MonoBehaviour
     {
         _stacksPool = new ObjectPool<UIStack>(
             _uiStackPrefab.gameObject, 
-            null,
+            transform,
             10
         );
 

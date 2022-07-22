@@ -54,7 +54,6 @@ public class UIButton : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHa
     public virtual void OnPointerTouch()
     {
         EventOnTouch?.Invoke();
-        print(EventOnTouch.GetInvocationList().Length + " COunt");
     }
 
     public virtual void OnPointerEnter()

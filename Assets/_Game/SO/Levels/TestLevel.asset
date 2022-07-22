@@ -16,4 +16,4 @@ MonoBehaviour:
   ExistingItems:
   - {fileID: 11400000, guid: 521d0b7159828403bbbc55d6e600b68f, type: 2}
   - {fileID: 11400000, guid: b8c84bbaf772844929538189ede672ca, type: 2}
-  ItemsAmount: 0500000005000000
+  ExistingItemsAmount: 0400000006000000

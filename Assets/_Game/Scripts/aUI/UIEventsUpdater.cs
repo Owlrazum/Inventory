@@ -158,7 +158,6 @@ namespace SNG.UI
 #if UNITY_EDITOR
             if (Input.GetMouseButtonUp(0))
             {
-                print("up");
 #elif UNITY_ANDROID
             if (_currentTouch.phase == TouchPhase.Ended || _currentTouch.phase == TouchPhase.Canceled)
             {

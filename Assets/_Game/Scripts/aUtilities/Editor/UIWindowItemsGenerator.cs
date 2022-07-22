@@ -6,7 +6,7 @@ public class UIWindowItemsGenerator : EditorWindow
 {
     private Vector2Int _referenceScreenRes = new Vector2Int(1080, 1920);
 
-    private int _deltaPos = 0;
+    private int _gapSize = 0;
     private int _tileSize = 100;
     private int _rowCount = 5;
     private int _colCount = 3;
@@ -32,7 +32,7 @@ public class UIWindowItemsGenerator : EditorWindow
         EditorGUILayout.Separator();
 
         _tileSize = EditorGUILayout.IntField("SquareSize", _tileSize);
-        _deltaPos = EditorGUILayout.IntField("GapSize", _deltaPos);
+        _gapSize = EditorGUILayout.IntField("GapSize", _gapSize);
         _rowCount = EditorGUILayout.IntField("RowCount", _rowCount);
         _colCount = EditorGUILayout.IntField("ColumnCount", _colCount);
         EditorGUILayout.Separator();
@@ -49,19 +49,10 @@ public class UIWindowItemsGenerator : EditorWindow
 
     private void GenerateTiles()
     {
-        float scalarDeltaX = _tileSize + _deltaPos;
-        float scalarDeltaZ = _tileSize + _deltaPos;
-        Vector2 horizDisplacement = scalarDeltaX * Vector2.right;
-        Vector2 verticalDisplacement = scalarDeltaZ * Vector2.down;
+        Vector2Int gapSizeDelta = new Vector2Int(_rowCount - 1, _colCount - 1) * _gapSize;
+        Vector2Int gridSize = new Vector2Int(_colCount * _tileSize, _rowCount *_tileSize) + gapSizeDelta;
 
-        Vector2 initTilePos = Vector2.zero;
-
-        Vector2 rowStartTilePos = initTilePos;
-        Vector2 tilePos = initTilePos;
-
-        Vector2Int gridSize = new Vector2Int(_colCount * _tileSize, _rowCount *_tileSize);
-
-        GameObject canvasGb = new GameObject("ItemsWindowCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GameCanvas));
+        GameObject canvasGb = new GameObject("ItemsWindowCanvas", typeof(Canvas), typeof(CanvasScaler));
         canvasGb.transform.SetParent(_canvasParent, false);
 
         canvasGb.TryGetComponent(out Canvas canvas);
@@ -76,9 +67,18 @@ public class UIWindowItemsGenerator : EditorWindow
         inventoryWindowRect.anchorMin = Vector2.one * 0.5f;
         inventoryWindowRect.anchorMax = Vector2.one * 0.5f;
         inventoryWindowRect.sizeDelta = gridSize + _inventoryWindowBorderWidth;
-        
-        RectTransform inventoryContainer = CreateInventoryContainer("Inventory", inventoryWindow.transform);
+
+        RectTransform tilesContainer = CreateInventoryContainer("Tiles", inventoryWindow.transform);
         RectTransform itemsParent = CreateItemsContainer("Items", inventoryWindow.transform);
+
+        float scalarDeltaX = _tileSize + _gapSize;
+        float scalarDeltaZ = _tileSize + _gapSize;
+        Vector2 initTilePos = Vector2.zero;
+        Vector2 rowStartTilePos = initTilePos;
+        Vector2 horizDisplacement = scalarDeltaX * Vector2.right;
+        Vector2 verticalDisplacement = scalarDeltaZ * Vector2.down;
+
+        Vector2 tilePos = initTilePos;
 
         UITile[,] generatedTiles = new UITile[_colCount, _rowCount];
         for (int row = 0; row < _rowCount; row++)
@@ -86,7 +86,7 @@ public class UIWindowItemsGenerator : EditorWindow
             for (int column = 0; column < _colCount; column++)
             {
                 GameObject tileGb =
-                    Instantiate(_tilePrefab, inventoryContainer);
+                    Instantiate(_tilePrefab, tilesContainer);
                 tileGb.TryGetComponent(out RectTransform rect);
                 rect.anchorMin = new Vector2(0, 1);
                 rect.anchorMax = new Vector2(0, 1);
@@ -110,15 +110,15 @@ public class UIWindowItemsGenerator : EditorWindow
             rowStartTilePos = tilePos;
         }
 
-        if (inventoryContainer.TryGetComponent(out UIWindowCraft inventory))
+        if (tilesContainer.TryGetComponent(out UIWindowItems uiWindowItems))
         {
-            inventory.AssignTiles(generatedTiles, itemsParent, _tileSize, gridSize, _inventoryWindowBorderWidth);
+            uiWindowItems.AssignTiles(generatedTiles, itemsParent, _tileSize, _gapSize, gridSize, _inventoryWindowBorderWidth);
         }
     }
 
     private RectTransform CreateInventoryContainer(string name, Transform inventoryWindowTransform)
     { 
-        GameObject gb = new GameObject(name, typeof(RectTransform), typeof(UIWindowCraft));
+        GameObject gb = new GameObject(name, typeof(RectTransform), typeof(UIWindowItems));
         gb.transform.SetParent(inventoryWindowTransform, false);
         gb.TryGetComponent(out RectTransform tilesParentRect);
         tilesParentRect.anchorMin = Vector2.zero;

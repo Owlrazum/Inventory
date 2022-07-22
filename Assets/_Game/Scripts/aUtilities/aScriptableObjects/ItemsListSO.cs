@@ -3,8 +3,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "GlobalItemList", menuName = "Crafting/GlobalItemList", order = 1)]
 public class ItemsListSO : ScriptableObject
 {
-    [SerializeField]
-    private ItemSO[] Items;
+    public ItemSO[] Items;
 
     public void AssignIDs()
     {

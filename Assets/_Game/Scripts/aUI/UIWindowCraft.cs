@@ -3,20 +3,7 @@ using UnityEngine;
 
 public class UIWindowCraft : UITilesWindow
 {
-    private HashSet<int> _craftTilesInstanceIDs;
-
     private UIStack _pushedOutByPlacementStack;
-
-    protected override void Awake()
-    {
-        base.Awake();
-
-        _craftTilesInstanceIDs = new HashSet<int>();
-        for (int i = 0; i < _tiles.Length; i++)
-        {
-            _craftTilesInstanceIDs.Add(_tiles[i].GetInstanceID());
-        }
-    }
 
     protected override void Subscribe()
     {
@@ -52,6 +39,11 @@ public class UIWindowCraft : UITilesWindow
 
     private void OnStackShouldHighlight(UIStack stack)
     {
+        if (!_tilesInstanceIDs.Contains(stack.Data.TileInstanceID))
+        {
+            return;
+        }
+
         foreach (var index in stack.GetFillState())
         {
             _tiles[TileIndex(index)].HighLightState();
@@ -60,6 +52,11 @@ public class UIWindowCraft : UITilesWindow
 
     private void OnStackShouldDefault(UIStack stack)
     { 
+        if (!_tilesInstanceIDs.Contains(stack.Data.TileInstanceID))
+        {
+            return;
+        }
+
         foreach (var index in stack.GetFillState())
         {
             _tiles[TileIndex(index)].DefaultState();
@@ -167,16 +164,6 @@ public class UIWindowCraft : UITilesWindow
         }
     }
 
-
-    private bool CheckIfTileInCraftWindow(UITile tile)
-    {
-        if (!_craftTilesInstanceIDs.Contains(tile.GetInstanceID()))
-        {
-            return false;
-        }
-        return true;
-    }
-
     private void CheckAndUpdateAnchPosBelowPointer(UIStack stack)
     {
         var fillState = stack.GetFillState();
@@ -201,7 +188,7 @@ public class UIWindowCraft : UITilesWindow
             }
         }
 
-        stack.StackData.TilePos += minDelta;
+        stack.Data.TilePos += minDelta;
         UpdateStackAnchPos(stack);
     }
 }

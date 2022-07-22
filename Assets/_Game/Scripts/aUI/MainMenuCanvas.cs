@@ -1,7 +1,5 @@
 using UnityEngine;
 
-using SNG.UI;
-
 public class MainMenuCanvas : MonoBehaviour
 {
     private UIButton _startGameButton;
@@ -19,6 +17,7 @@ public class MainMenuCanvas : MonoBehaviour
     private void OnDestroy()
     {
         _startGameButton.EventOnTouch -= OnStartGameButtonPressed;
+        _exitGameButton.EventOnTouch -= OnExitGameButtonPressed;
     }
 
     private void OnStartGameButtonPressed()

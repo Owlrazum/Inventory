@@ -6,7 +6,7 @@ public class UIWindowCraftGenerator : EditorWindow
 {
     private Vector2Int _referenceScreenRes = new Vector2Int(1080, 1920);
 
-    private int _deltaPos = 0;
+    private int _gapSize = 0;
     private int _tileSize = 100;
     private int _rowCount = 5;
     private int _colCount = 3;
@@ -32,7 +32,7 @@ public class UIWindowCraftGenerator : EditorWindow
         EditorGUILayout.Separator();
 
         _tileSize = EditorGUILayout.IntField("SquareSize", _tileSize);
-        _deltaPos = EditorGUILayout.IntField("GapSize", _deltaPos);
+        _gapSize = EditorGUILayout.IntField("GapSize", _gapSize);
         _rowCount = EditorGUILayout.IntField("RowCount", _rowCount);
         _colCount = EditorGUILayout.IntField("ColumnCount", _colCount);
         EditorGUILayout.Separator();
@@ -49,8 +49,8 @@ public class UIWindowCraftGenerator : EditorWindow
 
     private void GenerateTiles()
     {
-        float scalarDeltaX = _tileSize + _deltaPos;
-        float scalarDeltaZ = _tileSize + _deltaPos;
+        float scalarDeltaX = _tileSize + _gapSize;
+        float scalarDeltaZ = _tileSize + _gapSize;
         Vector2 horizDisplacement = scalarDeltaX * Vector2.right;
         Vector2 verticalDisplacement = scalarDeltaZ * Vector2.down;
 
@@ -110,15 +110,15 @@ public class UIWindowCraftGenerator : EditorWindow
             rowStartTilePos = tilePos;
         }
 
-        if (tilesContainer.TryGetComponent(out UIWindowItems itemsWindow))
+        if (tilesContainer.TryGetComponent(out UIWindowCraft itemsWindow))
         {
-            itemsWindow.AssignTiles(generatedTiles, itemsParent, _tileSize, gridSize, _inventoryWindowBorderWidth);
+            itemsWindow.AssignTiles(generatedTiles, itemsParent, _tileSize, _gapSize, gridSize, _inventoryWindowBorderWidth);
         }
     }
 
     private RectTransform CreateTilesContainer(string name, Transform totalWindowTransform)
     { 
-        GameObject gb = new GameObject(name, typeof(RectTransform), typeof(UIWindowItems));
+        GameObject gb = new GameObject(name, typeof(RectTransform), typeof(UIWindowCraft));
         gb.transform.SetParent(totalWindowTransform, false);
         gb.TryGetComponent(out RectTransform tilesParentRect);
         tilesParentRect.anchorMin = Vector2.zero;

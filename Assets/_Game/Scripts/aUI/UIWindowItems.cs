@@ -27,8 +27,10 @@ public class UIWindowItems : UITilesWindow
             stackData.ItemTypeID = itemType.ID;
             stackData.ItemAmount = itemAmount;
             stackData.TilePos = new Vector2Int(i, 0);
+            stackData.TileInstanceID = _tiles[TileIndex(stackData.TilePos)].GetInstanceID();
 
             uiStack.InitializeWithData(stackData, _itemsParent);
+            UpdateStackAnchPos(uiStack);
         }
     }
 }

@@ -38,9 +38,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 960, y: 70}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0, y: 1}
 --- !u!222 &1805491901256972522
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -157,12 +157,12 @@ PrefabInstance:
     - target: {fileID: 2296218681877373017, guid: 22d1a5ba89d284e30bf7be45430c1684,
         type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2296218681877373017, guid: 22d1a5ba89d284e30bf7be45430c1684,
         type: 3}
       propertyPath: m_AnchorMin.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2296218681877373017, guid: 22d1a5ba89d284e30bf7be45430c1684,
         type: 3}
@@ -172,12 +172,12 @@ PrefabInstance:
     - target: {fileID: 2296218681877373017, guid: 22d1a5ba89d284e30bf7be45430c1684,
         type: 3}
       propertyPath: m_SizeDelta.x
-      value: 30
+      value: -105
       objectReference: {fileID: 0}
     - target: {fileID: 2296218681877373017, guid: 22d1a5ba89d284e30bf7be45430c1684,
         type: 3}
       propertyPath: m_SizeDelta.y
-      value: 30
+      value: -105
       objectReference: {fileID: 0}
     - target: {fileID: 2296218681877373017, guid: 22d1a5ba89d284e30bf7be45430c1684,
         type: 3}
@@ -217,12 +217,12 @@ PrefabInstance:
     - target: {fileID: 2296218681877373017, guid: 22d1a5ba89d284e30bf7be45430c1684,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -20
+      value: 47.5
       objectReference: {fileID: 0}
     - target: {fileID: 2296218681877373017, guid: 22d1a5ba89d284e30bf7be45430c1684,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 20
+      value: -47.5
       objectReference: {fileID: 0}
     - target: {fileID: 2296218681877373017, guid: 22d1a5ba89d284e30bf7be45430c1684,
         type: 3}
@@ -243,6 +243,21 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: ItemCounter
+      objectReference: {fileID: 0}
+    - target: {fileID: 3472464745420418412, guid: 22d1a5ba89d284e30bf7be45430c1684,
+        type: 3}
+      propertyPath: m_fontSize
+      value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 3472464745420418412, guid: 22d1a5ba89d284e30bf7be45430c1684,
+        type: 3}
+      propertyPath: m_fontSizeMax
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 3472464745420418412, guid: 22d1a5ba89d284e30bf7be45430c1684,
+        type: 3}
+      propertyPath: m_enableAutoSizing
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 22d1a5ba89d284e30bf7be45430c1684, type: 3}
