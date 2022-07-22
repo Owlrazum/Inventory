@@ -6,13 +6,13 @@ public class UIWindowItems : UITilesWindow
     protected override void Awake()
     {
         base.Awake();
-        EventsContainer.ShouldPrepareLevel += OnPrepareLevel;
+        GameDelegatesContainer.StartLevel += OnPrepareLevel;
     }
 
     protected override void OnDestroy()
     {
         base.OnDestroy();
-        EventsContainer.ShouldPrepareLevel -= OnPrepareLevel;
+        GameDelegatesContainer.StartLevel -= OnPrepareLevel;
     }
 
     private void OnPrepareLevel(LevelDescriptionSO levelDescription)
@@ -22,7 +22,7 @@ public class UIWindowItems : UITilesWindow
             ItemSO itemType = levelDescription.ExistingItems[i];
             int itemAmount = levelDescription.ExistingItemsAmount[i];
 
-            UIStack uiStack = PoolingDelegatesContainer.SpawnUIStackAndQueryIt();
+            UIStack uiStack = PoolingDelegatesContainer.SpawnStack();
             UIStackData stackData = new UIStackData();
             stackData.ItemTypeID = itemType.ID;
             stackData.ItemAmount = itemAmount;

@@ -15,15 +15,15 @@ public class UIBuildLogCanvas : UIBaseFadingCanvas
     protected override void Awake()
     {
         base.Awake();
-        UIEventsContainer.EventBuildLog += OnEventBuildLog;
+        UIDelegatesContainer.BuildLog += BuildLog;
     }
 
     private void OnDestroy()
     { 
-        UIEventsContainer.EventBuildLog -= OnEventBuildLog;
+        UIDelegatesContainer.BuildLog -= BuildLog;
     }
 
-    private void OnEventBuildLog(string msg)
+    private void BuildLog(string msg)
     {
         if (_logCounter > _maxLogCount)
         {

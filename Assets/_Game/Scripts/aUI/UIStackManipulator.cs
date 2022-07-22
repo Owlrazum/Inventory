@@ -1,6 +1,8 @@
 using System.Collections;
 using UnityEngine;
 
+using Orazum.UI;
+
 public class UIStackManipulator : MonoBehaviour
 {
     private const float DEPTH_POS_DEFAULT = 0;
@@ -17,6 +19,8 @@ public class UIStackManipulator : MonoBehaviour
     private IEnumerator _stackFollowSequence;
     private Vector2 _prevPos;
 
+    private UIEventsUpdater _pointerEventsUpdater;
+
     private void Awake()
     {
         CraftingDelegatesContainer.EventTileUnderPointerCame += OnTileUnderPointerCame;
@@ -25,7 +29,7 @@ public class UIStackManipulator : MonoBehaviour
         CraftingDelegatesContainer.EventStackWasSelected += OnStackWasSelected;
         // CraftingDelegatesContainer.FuncSelectedStack += GetSelectedStack;
 
-        CraftingDelegatesContainer.FuncIsStackSelected += IsStackSelected;
+        CraftingDelegatesContainer.IsStackSelected += IsStackSelected;
     }
 
     private void OnDestroy()
@@ -36,7 +40,12 @@ public class UIStackManipulator : MonoBehaviour
         CraftingDelegatesContainer.EventStackWasSelected -= OnStackWasSelected;
         // CraftingDelegatesContainer.FuncSelectedStack -= GetSelectedStack;
 
-        CraftingDelegatesContainer.FuncIsStackSelected -= IsStackSelected;
+        CraftingDelegatesContainer.IsStackSelected -= IsStackSelected;
+    }
+
+    private void Start()
+    {
+        _pointerEventsUpdater = UIDelegatesContainer.GetEventsUpdater();
     }
 
     private void OnTileUnderPointerCame(UITile tile)
@@ -50,13 +59,13 @@ public class UIStackManipulator : MonoBehaviour
         }
 
         _isCurrentPlacementPosValid =
-            CraftingDelegatesContainer.QueryCheckSelectedStackFillStateValid(_selectedStackFillState, _tileUnderPointer.Pos);
+            CraftingDelegatesContainer.CheckSelectedStackFillStateValid(_selectedStackFillState, _tileUnderPointer.Pos);
         if (!_isCurrentPlacementPosValid)
         {
             return;
         }
 
-        CraftingDelegatesContainer.EventTilesDeltaShouldHighLight?.Invoke(_selectedStackFillState, _tileUnderPointer.Pos);
+        CraftingDelegatesContainer.HighlightTilesDelta?.Invoke(_selectedStackFillState, _tileUnderPointer.Pos);
     }
 
     private void OnTileUnderPointerGone()
@@ -73,7 +82,7 @@ public class UIStackManipulator : MonoBehaviour
             return;
         }
 
-        CraftingDelegatesContainer.EventTilesDeltaShouldDefault?.Invoke(_selectedStackFillState, _tileUnderPointer.Pos);
+        CraftingDelegatesContainer.DefaultTilesDelta?.Invoke(_selectedStackFillState, _tileUnderPointer.Pos);
         // _tileUnderPointer = null;
     }
 
@@ -82,7 +91,7 @@ public class UIStackManipulator : MonoBehaviour
     {
         if (stack.Data.ItemAmount > 1)
         {
-            _selectedStack = PoolingDelegatesContainer.SpawnUIStackAndQueryIt();
+            _selectedStack = PoolingDelegatesContainer.SpawnStack();
             UIStackData stackData = UIStackData.TakeOne(stack.Data);
             _selectedStack.InitializeWithData(stackData, stack.BoundingRect);
             _selectedStack.Rect.anchoredPosition = stack.Rect.anchoredPosition;
@@ -96,8 +105,8 @@ public class UIStackManipulator : MonoBehaviour
         InitializeSelectedFillState(_selectedStack);
 
         _isCurrentPlacementPosValid =
-            CraftingDelegatesContainer.QueryCheckSelectedStackFillStateValid(_selectedStackFillState, _tileUnderPointer.Pos);
-        CraftingDelegatesContainer.EventTilesDeltaShouldHighLight?.Invoke(_selectedStackFillState, _tileUnderPointer.Pos);
+            CraftingDelegatesContainer.CheckSelectedStackFillStateValid(_selectedStackFillState, _tileUnderPointer.Pos);
+        CraftingDelegatesContainer.HighlightTilesDelta?.Invoke(_selectedStackFillState, _tileUnderPointer.Pos);
 
         if (_stackFollowSequence == null)
         {
@@ -116,7 +125,7 @@ public class UIStackManipulator : MonoBehaviour
         InitializeSelectedFillState(_selectedStack);
 
         _isCurrentPlacementPosValid =
-            CraftingDelegatesContainer.QueryCheckSelectedStackFillStateValid(_selectedStackFillState, _tileUnderPointer.Pos);
+            CraftingDelegatesContainer.CheckSelectedStackFillStateValid(_selectedStackFillState, _tileUnderPointer.Pos);
     }
 
     private UIStack GetSelectedStack()
@@ -131,7 +140,7 @@ public class UIStackManipulator : MonoBehaviour
 
     private IEnumerator StackFollowSequence()
     {
-        UIEventsContainer.EventRegisterMovingUI?.Invoke();
+        _pointerEventsUpdater.RegisterMovingUI();
 #if UNITY_EDITOR
         _prevPos = Input.mousePosition;
         _prevPos -= _pickUpDelta;
@@ -144,13 +153,13 @@ public class UIStackManipulator : MonoBehaviour
                 if (_isCurrentPlacementPosValid)
                 {
                     UIStack toPlace = _selectedStack;
-                    _selectedStack = CraftingDelegatesContainer.QueryPushedOutByPlacementStack();
+                    _selectedStack = CraftingDelegatesContainer.GetPushedOutByPlacementStack();
 
-                    CraftingDelegatesContainer.EventStackPlacementUnderPointer?.Invoke(toPlace, _selectedStackFillState[0]);
+                    CraftingDelegatesContainer.PlaceStackUnderPointer?.Invoke(toPlace, _selectedStackFillState[0]);
                     CheckPushedOutStackSelection();
                     if (_selectedStack == null)
                     { 
-                        UIEventsContainer.EventUnregisterMovingUI?.Invoke();
+                        _pointerEventsUpdater.UnregisterMovingUI();
                         _stackFollowSequence = null;
                         yield break;
                     }
@@ -160,14 +169,14 @@ public class UIStackManipulator : MonoBehaviour
                 }
                 else
                 { 
-                    CraftingDelegatesContainer.ActionReturnStackToItsPlace(_selectedStack);
+                    CraftingDelegatesContainer.ReturnStackToPreviousPlace(_selectedStack);
                 }
             }
 
             Vector2 newPos = Input.mousePosition;
             _selectedStack.Rect.anchoredPosition += newPos - _prevPos;
             _prevPos = newPos;
-            UIEventsContainer.EventMovingUIFinishedMove?.Invoke();
+            _pointerEventsUpdater.NotifyFinishedMove();
             yield return null;
         }
 

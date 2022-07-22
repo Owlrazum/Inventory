@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine.Assertions;
 using UnityEngine;
-using SNG.UI;
+using Orazum.UI;
 
 // All sizes are in screen space pixels;
 public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
@@ -86,21 +86,21 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
 
     protected virtual void Subscribe()
     { 
-        CraftingDelegatesContainer.EventStackPlacementUnderPointer += OnStackPlacementUnderPointer;
+        CraftingDelegatesContainer.PlaceStackUnderPointer += OnStackPlacementUnderPointer;
 
-        CraftingDelegatesContainer.ActionReturnStackToItsPlace += OnReturnStackToItsPlace;
+        CraftingDelegatesContainer.ReturnStackToPreviousPlace += ReturnStackToPreviousPlace;
     }
 
     protected virtual void OnDestroy()
     { 
-        CraftingDelegatesContainer.EventStackPlacementUnderPointer -= OnStackPlacementUnderPointer;
+        CraftingDelegatesContainer.PlaceStackUnderPointer -= OnStackPlacementUnderPointer;
 
-        CraftingDelegatesContainer.ActionReturnStackToItsPlace -= OnReturnStackToItsPlace;
+        CraftingDelegatesContainer.ReturnStackToPreviousPlace -= ReturnStackToPreviousPlace;
     }
 
     protected virtual void Start()
     {
-        var updater = UIQueriesContainer.FuncGetUpdater();
+        var updater = UIDelegatesContainer.GetEventsUpdater();
         updater.AddPointerLocalPointHandler(this);
     }
 
@@ -350,7 +350,7 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
     private void OnTileUnderPointerCame()
     {
         CraftingDelegatesContainer.EventTileUnderPointerCame?.Invoke(_tileUnderPointer);
-        if (CraftingDelegatesContainer.QueryIsStackSelected())
+        if (CraftingDelegatesContainer.IsStackSelected())
         {
             return;
         }
@@ -361,7 +361,7 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
     private void OnTileUnderPointerGone()
     {
         CraftingDelegatesContainer.EventTileUnderPointerGone?.Invoke();
-        if (CraftingDelegatesContainer.QueryIsStackSelected())
+        if (CraftingDelegatesContainer.IsStackSelected())
         {
             return;
         }
@@ -390,9 +390,9 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
 
     private UIStack AddNewStack(UIStackData stackData)
     { 
-        UIStack uiStack = PoolingDelegatesContainer.FuncSpawnUIStack();
+        UIStack uiStack = PoolingDelegatesContainer.SpawnStack();
         uiStack.InitializeWithData(stackData, _itemsParent);
-        Vector2Int stackSizeInt = CraftingDelegatesContainer.QueryGetItemSO(stackData.ItemTypeID).Size;
+        Vector2Int stackSizeInt = CraftingDelegatesContainer.GetItemSO(stackData.ItemTypeID).Size;
 
         UpdateStackAnchPos(uiStack);
         AssignStackToTilesReferences(uiStack);
@@ -402,7 +402,7 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
 
     private UIStack AddNewStack(ItemSO itemType, int itemAmount, Vector2Int tilePos)
     {
-        UIStack uiStack = PoolingDelegatesContainer.FuncSpawnUIStack();
+        UIStack uiStack = PoolingDelegatesContainer.SpawnStack();
 
         UIStackData stackData = new UIStackData();
         stackData.ItemAmount = itemAmount;
@@ -444,7 +444,7 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
         }
     }
 
-    private void OnReturnStackToItsPlace(UIStack stack)
+    private void ReturnStackToPreviousPlace(UIStack stack)
     {
         if (!_tilesInstanceIDs.Contains(stack.Data.TileInstanceID))
         {

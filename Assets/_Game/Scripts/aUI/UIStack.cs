@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 using TMPro;
 
-using SNG.UI;
+using Orazum.UI;
 
 [System.Serializable]
 public class UIStackData
@@ -63,7 +63,7 @@ public class UIStackData
 
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
-public class UIStack : MonoBehaviour, IPoolable, IPointerTouchHandler, IPointerEnterExitHandler
+public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHandler
 {
     public UIStackData Data { get; private set; }
     public RectTransform BoundingRect { get; private set; }
@@ -88,7 +88,7 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerTouchHandler, IPointerE
         Data = stackData;
         BoundingRect = boundingRect;
 
-        _itemSO = CraftingDelegatesContainer.FuncGetItemSO(stackData.ItemTypeID);
+        _itemSO = CraftingDelegatesContainer.GetItemSO(stackData.ItemTypeID);
         _fillState = new Vector2Int[_itemSO.Size.x * _itemSO.Size.y];
         _shouldUpdateFillState = true;
         Data.EventTilePosChanged += OnTilePosChanged;
@@ -116,7 +116,7 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerTouchHandler, IPointerE
         Data.EventTilePosChanged -= OnTilePosChanged;
         Data.EventItemAmountChanged -= OnItemAmountChanged;
         Data = null;
-        PoolingDelegatesContainer.EventDespawnUIStack(this);
+        PoolingDelegatesContainer.DespawnStack(this);
     }
 
     private void OnTilePosChanged()
@@ -177,8 +177,8 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerTouchHandler, IPointerE
 
     private void Start()
     {
-        UIQueriesContainer.QueryGetUpdater().AddPointerTouchHandler(this);
-        UIQueriesContainer.QueryGetUpdater().AddPointerEnterExitHandler(this);
+        UIDelegatesContainer.GetEventsUpdater().AddPointerTouchHandler(this);
+        UIDelegatesContainer.GetEventsUpdater().AddPointerEnterExitHandler(this);
     }
 
     private void Subscribe()
@@ -224,7 +224,7 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerTouchHandler, IPointerE
 
     public void OnPointerTouch()
     {
-        if (CraftingDelegatesContainer.QueryIsStackSelected())
+        if (CraftingDelegatesContainer.IsStackSelected())
         {
             return;
         }
@@ -234,12 +234,12 @@ public class UIStack : MonoBehaviour, IPoolable, IPointerTouchHandler, IPointerE
 
     public void OnPointerEnter()
     {
-        CraftingDelegatesContainer.EventStackShouldHighlight?.Invoke(this);
+        CraftingDelegatesContainer.HighlightStack?.Invoke(this);
     }
 
     public void OnPointerExit()
     { 
-        CraftingDelegatesContainer.EventStackShouldDefault?.Invoke(this);
+        CraftingDelegatesContainer.DefaultStack?.Invoke(this);
     }
 
     public Transform GetTransform()

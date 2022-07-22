@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace SNG.UI 
+namespace Orazum.UI 
 {
     public class UIEventsUpdater : MonoBehaviour
     {
@@ -31,24 +31,12 @@ namespace SNG.UI
             _enterExitHandlers  = new Dictionary<int, IPointerEnterExitHandler>();
             _localPointHandlers = new Dictionary<int, IPointerLocalPointHandler>();
 
-            UIEventsContainer.EventRegisterMovingUI += RegisterMovingUI;
-            UIEventsContainer.EventUnregisterMovingUI += UnregisterMovingUI;
-            UIEventsContainer.EventMovingUIFinishedMove += OnMovingUIFinishedMove;
-
-            UIQueriesContainer.FuncGetUpdater += GetUpdater;
+            UIDelegatesContainer.GetEventsUpdater += GetUpdater;
         }
 
         private void OnDestroy()
         { 
-            UIEventsContainer.EventRegisterMovingUI -= RegisterMovingUI;
-            UIEventsContainer.EventUnregisterMovingUI -= UnregisterMovingUI;
-            UIEventsContainer.EventMovingUIFinishedMove -= OnMovingUIFinishedMove;
-
-            UIQueriesContainer.FuncGetUpdater -= GetUpdater;
-
-            _touchHandlers.Clear();
-            _enterExitHandlers.Clear();
-            _localPointHandlers.Clear();
+            UIDelegatesContainer.GetEventsUpdater -= GetUpdater;
         }
 
         public void AddPointerTouchHandler(IPointerTouchHandler handler)
@@ -83,17 +71,17 @@ namespace SNG.UI
             _localPointHandlers.Remove(handler.InstanceID);
         }
 
-        private void RegisterMovingUI()
+        public void RegisterMovingUI()
         {
             _movingUICount++;
         }
 
-        private void UnregisterMovingUI()
+        public void UnregisterMovingUI()
         {
             _movingUICount--;
         }
 
-        private void OnMovingUIFinishedMove()
+        public void NotifyFinishedMove()
         {
             _finishedMovingUICount++;
             if (_finishedMovingUICount == _movingUICount)

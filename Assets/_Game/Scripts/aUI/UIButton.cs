@@ -2,7 +2,7 @@ using System;
 
 using UnityEngine;
 using UnityEngine.UI;
-using SNG.UI;
+using Orazum.UI;
 
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
@@ -36,14 +36,14 @@ public class UIButton : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHa
 
     private void Start()
     {
-        var uiUpdater = UIQueriesContainer.QueryGetUpdater();
+        var uiUpdater = UIDelegatesContainer.GetEventsUpdater();
         uiUpdater.AddPointerTouchHandler(this);
         uiUpdater.AddPointerEnterExitHandler(this);
     }
 
     private void OnDestroy()
     {
-        var uiUpdater = UIQueriesContainer.QueryGetUpdater();
+        var uiUpdater = UIDelegatesContainer.GetEventsUpdater();
         if (uiUpdater != null)
         { 
             uiUpdater.RemovePointerTouchHandler(this);

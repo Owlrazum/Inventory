@@ -9,14 +9,14 @@ public class UIWindowCraft : UITilesWindow
     {
         base.Subscribe();
 
-        CraftingDelegatesContainer.EventStackShouldHighlight += OnStackShouldHighlight;
-        CraftingDelegatesContainer.EventStackShouldDefault   += OnStackShouldDefault;
+        CraftingDelegatesContainer.HighlightStack += OnStackShouldHighlight;
+        CraftingDelegatesContainer.DefaultStack   += OnStackShouldDefault;
 
-        CraftingDelegatesContainer.FuncCheckSelectedStackFillStateValid += CheckIfSelectedStackFillStateValid;
-        CraftingDelegatesContainer.FuncGetAndFreePushedOutByPlacementStack += GetAndFreePushedOutByPlacementStack;
+        CraftingDelegatesContainer.CheckSelectedStackFillStateValid += CheckIfSelectedStackFillStateValid;
+        CraftingDelegatesContainer.GetPushedOutByPlacementStack += GetAndFreePushedOutByPlacementStack;
 
-        CraftingDelegatesContainer.EventTilesDeltaShouldHighLight += OnTilesDeltaShouldHighLight;
-        CraftingDelegatesContainer.EventTilesDeltaShouldDefault   += OnTilesDeltaShouldDefault;
+        CraftingDelegatesContainer.HighlightTilesDelta += OnTilesDeltaShouldHighLight;
+        CraftingDelegatesContainer.DefaultTilesDelta   += OnTilesDeltaShouldDefault;
 
         CraftingDelegatesContainer.EventStackWasSelected += OnStackWasSelected;
     }
@@ -25,14 +25,14 @@ public class UIWindowCraft : UITilesWindow
     {
         base.OnDestroy();
 
-        CraftingDelegatesContainer.EventStackShouldHighlight -= OnStackShouldHighlight;
-        CraftingDelegatesContainer.EventStackShouldDefault   -= OnStackShouldDefault;
+        CraftingDelegatesContainer.HighlightStack -= OnStackShouldHighlight;
+        CraftingDelegatesContainer.DefaultStack   -= OnStackShouldDefault;
 
-        CraftingDelegatesContainer.FuncCheckSelectedStackFillStateValid -= CheckIfSelectedStackFillStateValid;
-        CraftingDelegatesContainer.FuncGetAndFreePushedOutByPlacementStack -= GetAndFreePushedOutByPlacementStack;    
+        CraftingDelegatesContainer.CheckSelectedStackFillStateValid -= CheckIfSelectedStackFillStateValid;
+        CraftingDelegatesContainer.GetPushedOutByPlacementStack -= GetAndFreePushedOutByPlacementStack;    
 
-        CraftingDelegatesContainer.EventTilesDeltaShouldHighLight -= OnTilesDeltaShouldHighLight;
-        CraftingDelegatesContainer.EventTilesDeltaShouldDefault   -= OnTilesDeltaShouldDefault;
+        CraftingDelegatesContainer.HighlightTilesDelta -= OnTilesDeltaShouldHighLight;
+        CraftingDelegatesContainer.DefaultTilesDelta   -= OnTilesDeltaShouldDefault;
 
         CraftingDelegatesContainer.EventStackWasSelected -= OnStackWasSelected;
     }
