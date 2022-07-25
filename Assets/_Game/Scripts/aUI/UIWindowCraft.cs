@@ -9,32 +9,30 @@ public class UIWindowCraft : UITilesWindow
     {
         base.Subscribe();
 
-        CraftingDelegatesContainer.HighlightStack += OnStackShouldHighlight;
-        CraftingDelegatesContainer.DefaultStack   += OnStackShouldDefault;
+        CraftingDelegatesContainer.HighlightPlacedStack += OnStackShouldHighlight;
+        CraftingDelegatesContainer.DefaultPlacedStack   += OnStackShouldDefault;
 
-        CraftingDelegatesContainer.CheckSelectedStackFillStateValid += CheckIfSelectedStackFillStateValid;
-        CraftingDelegatesContainer.GetPushedOutByPlacementStack += GetAndFreePushedOutByPlacementStack;
+        CraftingDelegatesContainer.IsCurrentPlacementPosValid += CheckIfSelectedStackFillStateValid;
 
-        CraftingDelegatesContainer.HighlightTilesDelta += OnTilesDeltaShouldHighLight;
-        CraftingDelegatesContainer.DefaultTilesDelta   += OnTilesDeltaShouldDefault;
+        CraftingDelegatesContainer.HighlightTilesUnderSelectedStack += HighlightTilesUnderSelectedStack;
+        CraftingDelegatesContainer.DefaultLastTilesUnderSelectedStack   += OnTilesDeltaShouldDefault;
 
-        CraftingDelegatesContainer.EventStackWasSelected += OnStackWasSelected;
+        // CraftingDelegatesContainer.EventStackWasSelected += OnStackWasSelected;
     }
 
     protected override void OnDestroy()
     {
         base.OnDestroy();
 
-        CraftingDelegatesContainer.HighlightStack -= OnStackShouldHighlight;
-        CraftingDelegatesContainer.DefaultStack   -= OnStackShouldDefault;
+        CraftingDelegatesContainer.HighlightPlacedStack -= OnStackShouldHighlight;
+        CraftingDelegatesContainer.DefaultPlacedStack   -= OnStackShouldDefault;
 
-        CraftingDelegatesContainer.CheckSelectedStackFillStateValid -= CheckIfSelectedStackFillStateValid;
-        CraftingDelegatesContainer.GetPushedOutByPlacementStack -= GetAndFreePushedOutByPlacementStack;    
+        CraftingDelegatesContainer.IsCurrentPlacementPosValid -= CheckIfSelectedStackFillStateValid;
 
-        CraftingDelegatesContainer.HighlightTilesDelta -= OnTilesDeltaShouldHighLight;
-        CraftingDelegatesContainer.DefaultTilesDelta   -= OnTilesDeltaShouldDefault;
+        CraftingDelegatesContainer.HighlightTilesUnderSelectedStack -= HighlightTilesUnderSelectedStack;
+        CraftingDelegatesContainer.DefaultLastTilesUnderSelectedStack   -= OnTilesDeltaShouldDefault;
 
-        CraftingDelegatesContainer.EventStackWasSelected -= OnStackWasSelected;
+        // CraftingDelegatesContainer.EventStackWasSelected -= OnStackWasSelected;
     }
 
     private void OnStackShouldHighlight(UIStack stack)
@@ -44,10 +42,10 @@ public class UIWindowCraft : UITilesWindow
             return;
         }
 
-        foreach (var index in stack.GetFillState())
-        {
-            _tiles[TileIndex(index)].HighLightState();
-        }
+        // foreach (var index in stack.GetFillState())
+        // {
+        //     _tiles[TileIndex(index)].HighLightState();
+        // }
     }
 
     private void OnStackShouldDefault(UIStack stack)
@@ -57,45 +55,49 @@ public class UIWindowCraft : UITilesWindow
             return;
         }
 
-        foreach (var index in stack.GetFillState())
-        {
-            _tiles[TileIndex(index)].DefaultState();
-        }
+        // foreach (var index in stack.GetFillState())
+        // {
+        //     _tiles[TileIndex(index)].DefaultState();
+        // }
     }
 
-    private bool CheckIfSelectedStackFillStateValid(Vector2Int[] tilesDelta, Vector2Int tilePos)
+    private bool CheckIfSelectedStackFillStateValid(
+        UIStack stack, 
+        Vector2Int stackSelectionLocalPos, 
+        Vector2Int tilePos
+    )
     {
-        UIStack currentStack = null;
-        _pushedOutByPlacementStack = null;
-        foreach (var pos in tilesDelta)
-        {
-            Vector2Int tileIndex = tilePos + pos;
-            if (tileIndex.x >= _gridResolution.x || 
-                tileIndex.y >= _gridResolution.y ||
-                tileIndex.x < 0 ||
-                tileIndex.y < 0)
-            {
-                _pushedOutByPlacementStack = null;
-                return false;
-            }
+        // UIStack currentStack = null;
+        // _pushedOutByPlacementStack = null;
+        // foreach (var pos in tilesDelta)
+        // {
+        //     Vector2Int tileIndex = tilePos + pos;
+        //     if (tileIndex.x >= _gridResolution.x || 
+        //         tileIndex.y >= _gridResolution.y ||
+        //         tileIndex.x < 0 ||
+        //         tileIndex.y < 0)
+        //     {
+        //         _pushedOutByPlacementStack = null;
+        //         return false;
+        //     }
 
-            currentStack = _tiles[TileIndex(tileIndex)].PlacedStack;
-            if (currentStack != null)
-            {
-                if (_pushedOutByPlacementStack == null)
-                {
-                    _pushedOutByPlacementStack = currentStack;
-                }
-                else
-                {
-                    if (_pushedOutByPlacementStack.GetInstanceID() != currentStack.GetInstanceID())
-                    {
-                        _pushedOutByPlacementStack = null;
-                        return false;
-                    }
-                }
-            }
-        }
+        //     currentStack = _tiles[TileIndex(tileIndex)].PlacedStack;
+        //     if (currentStack != null)
+        //     {
+        //         if (_pushedOutByPlacementStack == null)
+        //         {
+        //             _pushedOutByPlacementStack = currentStack;
+        //         }
+        //         else
+        //         {
+        //             if (_pushedOutByPlacementStack.GetInstanceID() != currentStack.GetInstanceID())
+        //             {
+        //                 _pushedOutByPlacementStack = null;
+        //                 return false;
+        //             }
+        //         }
+        //     }
+        // }
 
         return true;
     }
@@ -112,20 +114,20 @@ public class UIWindowCraft : UITilesWindow
         return toReturn;
     }
 
-    private void OnTilesDeltaShouldHighLight(Vector2Int[] tilesDelta, Vector2Int tilePos)
+    private void HighlightTilesUnderSelectedStack(UIStack uiStack, Vector2Int tilePos)
     {
-        foreach (var pos in tilesDelta)
-        {
-            _tiles[TileIndex(tilePos + pos)].HighLightState();
-        }
+        // foreach (var pos in tilesDelta)
+        // {
+        //     _tiles[TileIndex(tilePos + pos)].HighLightState();
+        // }
     }
 
-    private void OnTilesDeltaShouldDefault(Vector2Int[] tilesDelta, Vector2Int tilePos)
+    private void OnTilesDeltaShouldDefault(UIStack uiStack, Vector2Int tilePos)
     {
-        foreach (var pos in tilesDelta)
-        {
-            _tiles[TileIndex(tilePos + pos)].DefaultState();
-        }
+        // foreach (var pos in tilesDelta)
+        // {
+        //     _tiles[TileIndex(tilePos + pos)].DefaultState();
+        // }
     }
 
     private void OnStackWasSelected(UIStack stack)
@@ -158,37 +160,37 @@ public class UIWindowCraft : UITilesWindow
 
     private void RemoveStackFromTilesReferences(UIStack stack)
     {
-        foreach (Vector2Int toFree in stack.GetFillState())
-        {
-            _tiles[TileIndex(toFree.x, toFree.y)].PlacedStack = null;
-        }
+        // foreach (Vector2Int toFree in stack.GetFillState())
+        // {
+        //     _tiles[TileIndex(toFree.x, toFree.y)].PlacedStack = null;
+        // }
     }
 
     private void CheckAndUpdateAnchPosBelowPointer(UIStack stack)
     {
-        var fillState = stack.GetFillState();
-        for (int i = 0; i < fillState.Length; i++)
-        {
-            if (fillState[i] == _tileUnderPointer.Pos)
-            {
-                return;
-            }
-        }
+        // var fillState = stack.GetFillState();
+        // for (int i = 0; i < fillState.Length; i++)
+        // {
+        //     if (fillState[i] == _tileUnderPointer.Pos)
+        //     {
+        //         return;
+        //     }
+        // }
 
-        int minDistance = -1;
-        Vector2Int minDelta = Vector2Int.zero;
-        for (int i = 0; i < fillState.Length; i++)
-        {
-            Vector2Int delta = _tileUnderPointer.Pos - fillState[i];
-            int distance = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
-            if (minDistance < 0 || distance < minDistance)
-            {
-                minDistance = distance;
-                minDelta = delta;
-            }
-        }
+        // int minDistance = -1;
+        // Vector2Int minDelta = Vector2Int.zero;
+        // for (int i = 0; i < fillState.Length; i++)
+        // {
+        //     Vector2Int delta = _tileUnderPointer.Pos - fillState[i];
+        //     int distance = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
+        //     if (minDistance < 0 || distance < minDistance)
+        //     {
+        //         minDistance = distance;
+        //         minDelta = delta;
+        //     }
+        // }
 
-        stack.Data.TilePos += minDelta;
-        UpdateStackAnchPos(stack);
+        // stack.Data.TilePos += minDelta;
+        // UpdateStackAnchPos(stack);
     }
 }

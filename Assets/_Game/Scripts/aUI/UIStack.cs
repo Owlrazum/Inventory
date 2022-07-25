@@ -32,15 +32,14 @@ public class UIStackData
         set
         {
             _tilePos = value;
-            EventTilePosChanged?.Invoke();
         }
     }
 
     [NonSerialized]
     public int TileInstanceID;
 
-    [NonSerialized]
-    public Action EventTilePosChanged;
+    // [NonSerialized]
+    // public Action EventTilePosChanged;
 
     [NonSerialized]
     public Action EventItemAmountChanged;
@@ -59,7 +58,8 @@ public class UIStackData
     }
 }
 
-// LastPoint: Returning to its place, ItemType get private set
+// LastPoint: Returning to its place
+// TODO: make PointerDown and PointerUp handlers
 
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
@@ -70,7 +70,8 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
 
     private ItemSO _itemSO;
     public ItemSO ItemType {
-        get{
+        get
+        {
             return _itemSO;
         }
     }
@@ -83,6 +84,15 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
         }
     }
 
+    public enum StateType
+    { 
+        OneTiled,
+        Transition,
+        MultiTiled
+    }
+    private StateType _state;
+    public StateType State { get { return _state; } }
+
     public void InitializeWithData(UIStackData stackData, RectTransform boundingRect)
     {
         Data = stackData;
@@ -91,7 +101,6 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
         _itemSO = CraftingDelegatesContainer.GetItemSO(stackData.ItemTypeID);
         _fillState = new Vector2Int[_itemSO.Size.x * _itemSO.Size.y];
         _shouldUpdateFillState = true;
-        Data.EventTilePosChanged += OnTilePosChanged;
         Data.EventItemAmountChanged += OnItemAmountChanged;
 
         _image.sprite = _itemSO.Sprite;
@@ -113,15 +122,9 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
     public void Despawn()
     {
         gameObject.SetActive(false);
-        Data.EventTilePosChanged -= OnTilePosChanged;
         Data.EventItemAmountChanged -= OnItemAmountChanged;
         Data = null;
         PoolingDelegatesContainer.DespawnStack(this);
-    }
-
-    private void OnTilePosChanged()
-    {
-        _shouldUpdateFillState = true;
     }
 
     private void OnItemAmountChanged()
@@ -140,7 +143,10 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
     {
         _rect.anchoredPosition = anchoredPos;
         _rect.sizeDelta = sizeDelta;
-        _rect.SetParent(newParent, false);
+        if (newParent != null)
+        { 
+            _rect.SetParent(newParent, false);
+        }
     }
 
     private RectTransform _rect;
@@ -171,25 +177,19 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
         { 
             Debug.LogError("UIStack should have interactionRect as its second child");
         }
-
-        Subscribe();
     }
 
     private void Start()
     {
-        UIDelegatesContainer.GetEventsUpdater().AddPointerTouchHandler(this);
-        UIDelegatesContainer.GetEventsUpdater().AddPointerEnterExitHandler(this);
-    }
-
-    private void Subscribe()
-    {
+        var uiEventsUpdater = UIDelegatesContainer.GetEventsUpdater();
+        uiEventsUpdater.AddPointerEnterExitHandler(this);
+        uiEventsUpdater.AddPointerTouchHandler(this);
     }
 
     private void OnDestroy()
     {
         if (Data != null)
         { 
-            Data.EventTilePosChanged -= OnTilePosChanged;
             Data.EventItemAmountChanged -= OnItemAmountChanged;
         }
     }
@@ -204,24 +204,6 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
         yield return null;
     }
 
-    public Vector2Int[] GetFillState()
-    {
-        if (_shouldUpdateFillState)
-        { 
-            int indexer = 0;
-            for (int j = Data.TilePos.y; j < Data.TilePos.y + _itemSO.Size.y; j++)
-            {
-                for (int i = Data.TilePos.x; i < Data.TilePos.x + _itemSO.Size.x; i++)
-                {
-                    _fillState[indexer++] = new Vector2Int(i, j);
-                }
-            }
-            _shouldUpdateFillState = false;
-        }
-
-        return _fillState;
-    }
-
     public void OnPointerTouch()
     {
         if (CraftingDelegatesContainer.IsStackSelected())
@@ -229,17 +211,41 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
             return;
         }
 
-        CraftingDelegatesContainer.EventStackWasSelected?.Invoke(this);
+        if (_state == StateType.OneTiled)
+        { 
+            CraftingDelegatesContainer.EventStackWasSelected?.Invoke(this, Vector2Int.zero);
+        }
+        else
+        {
+            Vector2Int localPoint = UIDelegatesContainer.GetEventsUpdater().GetLocalPoint(Rect, out bool isValid);
+            if (!isValid)
+            { 
+                return;
+            }
+
+            int tileSize = CraftingDelegatesContainer.GetTileSizeInCraftWindow();
+            int col = localPoint.x / tileSize;
+            int row = localPoint.y / tileSize;
+            print(localPoint + " " + col + " " + row);
+        }
     }
 
     public void OnPointerEnter()
     {
-        CraftingDelegatesContainer.HighlightStack?.Invoke(this);
+        if (CraftingDelegatesContainer.IsStackSelected())
+        {
+            return;
+        }
+        CraftingDelegatesContainer.HighlightPlacedStack?.Invoke(this);
     }
 
     public void OnPointerExit()
     { 
-        CraftingDelegatesContainer.DefaultStack?.Invoke(this);
+        if (CraftingDelegatesContainer.IsStackSelected())
+        {
+            return;
+        }
+        CraftingDelegatesContainer.DefaultPlacedStack?.Invoke(this);
     }
 
     public Transform GetTransform()

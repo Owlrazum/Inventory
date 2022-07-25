@@ -17,6 +17,7 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
 
     [SerializeField]
     private int _tileSizePixels;
+    public int TileSizePixels;
 
     [SerializeField]
     private int _gapSize;
@@ -86,16 +87,12 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
 
     protected virtual void Subscribe()
     { 
-        CraftingDelegatesContainer.PlaceStackUnderPointer += OnStackPlacementUnderPointer;
-
-        CraftingDelegatesContainer.ReturnStackToPreviousPlace += ReturnStackToPreviousPlace;
+        CraftingDelegatesContainer.ReturnStackToItemsWindow += ReturnStackToPreviousPlace;
     }
 
     protected virtual void OnDestroy()
     { 
-        CraftingDelegatesContainer.PlaceStackUnderPointer -= OnStackPlacementUnderPointer;
-
-        CraftingDelegatesContainer.ReturnStackToPreviousPlace -= ReturnStackToPreviousPlace;
+        CraftingDelegatesContainer.ReturnStackToItemsWindow -= ReturnStackToPreviousPlace;
     }
 
     protected virtual void Start()
@@ -122,19 +119,29 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
         int col;
         if (_gapSize != 0)
         {
-            CheckIfLocalPointOnCorners(out isSufficientCheck, out isPosValid, out row, out col);
-            if (!isSufficientCheck)
-            {
-                DetermineCursorLocationWithGapsBetweenTiles(out isPosValid, out row, out col);
+            DetermineCursorLocationWithGapsBetweenTiles(out isPosValid, out row, out col);
+            if (isPosValid)
+            { 
+                Assert.IsTrue(row >= 0 && row < _gridResolution.y);
+                Assert.IsTrue(col >= 0 && col < _gridResolution.x);
             }
-            Assert.IsTrue(row >= 0 && row < _gridResolution.y);
-            Assert.IsTrue(col >= 0 && col < _gridResolution.x);
         }
         else
-        { 
-            row = (-_localPoint.y + _gridSize.y / 2) / _tileSizePixels;
-            col = ( _localPoint.x + _gridSize.x / 2) / _tileSizePixels;
+        {
+            int adjustedLocalPoint = (-_localPoint.y + _gridSize.y / 2);
+            if (adjustedLocalPoint == _tileSizePixels * _gridResolution.y)
+            {
+                adjustedLocalPoint--;
+            }
+            row = adjustedLocalPoint / _tileSizePixels;
             Assert.IsTrue(row >= 0 && row < _gridResolution.y);
+
+            adjustedLocalPoint = (_localPoint.x + _gridSize.x / 2);
+            if (adjustedLocalPoint == _tileSizePixels * _gridResolution.x)
+            {
+                adjustedLocalPoint--;
+            }
+            col = adjustedLocalPoint / _tileSizePixels;
             Assert.IsTrue(col >= 0 && col < _gridResolution.x);
             _cursorLocation = CursorLocationType.OnTile;
             isPosValid = true;
@@ -162,90 +169,27 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
             }
             if (_tileUnderPointer != null)
             {
-                OnTileUnderPointerGone();
+                CraftingDelegatesContainer.EventTileUnderPointerGone?.Invoke();
             }
             _tileUnderPointer = null;
             isSufficientCheck = true;
         }
     }
-
-    // Assumption is that localPoint is inside grid;
-    private void CheckIfLocalPointOnCorners(   
-        out bool isSufficientCheck, 
-        out bool isPosValid, 
-        out int row, 
-        out int col
-    )
-    {
-        isSufficientCheck = false;
-        isPosValid = false;
-        row = -1;
-        col = -1;
-
-        int localX = -1;
-        int localY = -1;
-
-        bool isLeftBorder = _localPoint.x <= _leftGridBorder + _tileSizePixels + _gapSize / 2;
-        bool isRightBorder = _localPoint.x >= _rightGridBorder - _tileSizePixels - _gapSize / 2;
-        bool isBotBorder = _localPoint.y <= _bottomGridBorder + _tileSizePixels + _gapSize / 2;
-        bool isTopBorder = _localPoint.y >= _topGridBorder - _tileSizePixels - _gapSize / 2;
-
-        if (isLeftBorder)
-        {
-            localX = _localPoint.x - _leftGridBorder;
-            if (isTopBorder)
-            {
-                localY = _topGridBorder - _localPoint.y;
-                row = 0;
-                col = 0;
-            }
-            else if (isBotBorder)
-            {
-                localY = _localPoint.y - _bottomGridBorder;
-                row = _gridResolution.y - 1;
-                col = 0;
-            }
-        }
-        else if (isRightBorder)
-        {
-            localX = _rightGridBorder - _localPoint.x;
-            if (isTopBorder)
-            {
-                localY = _topGridBorder - _localPoint.y;
-                row = 0;
-                col = _gridResolution.x - 1;
-            }
-            else if (isBotBorder)
-            {
-                localY = _localPoint.y - _bottomGridBorder;
-                row = _gridResolution.y - 1;
-                col = _gridResolution.x - 1;
-            }
-        }
-
-        bool isYBorder = isTopBorder || isBotBorder;
-        if (isLeftBorder && isYBorder || isRightBorder && isYBorder)
-        { 
-            if (localX > _tileSizePixels || localY > _tileSizePixels)
-            {
-                _cursorLocation = CursorLocationType.InsideWindow;
-            }
-            else
-            {
-                _cursorLocation = CursorLocationType.OnTile;
-                isPosValid = true;
-            }
-
-            isSufficientCheck = true;
-        }
-    }
-
+    
     private void DetermineCursorLocationWithGapsBetweenTiles(out bool isPosValid, out int row, out int col)
     {
         row = -1;
         col = -1;
 
         Vector2Int adjustedLocalPoint = _localPoint + _gridSize / 2;
+        if (adjustedLocalPoint.x == _tileSizePixels * _gridResolution.x + _gapSize * (_gridResolution.x - 1))
+        {
+            adjustedLocalPoint.x--;
+        }
+        if (adjustedLocalPoint.y == _tileSizePixels * _gridResolution.y + _gapSize * (_gridResolution.y - 1))
+        {
+            adjustedLocalPoint.y--;
+        }
 
         int leftBorder = _tileSizePixels + _gapSize / 2;
         int rightBorder = _gridSize.x - _tileSizePixels - _gapSize / 2;
@@ -328,12 +272,12 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
         {
             if (_tileUnderPointer.Pos.x != col || _tileUnderPointer.Pos.y != row)
             { 
-                OnTileUnderPointerGone();
+                CraftingDelegatesContainer.EventTileUnderPointerGone?.Invoke();
                 _tileUnderPointer = null;
                 if (_cursorLocation == CursorLocationType.OnTile)
                 { 
                     _tileUnderPointer = _tiles[TileIndex(col, row)];
-                    OnTileUnderPointerCame();
+                    CraftingDelegatesContainer.EventTileUnderPointerCame?.Invoke(_tileUnderPointer);
                 }
             }
         }
@@ -342,85 +286,25 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
             if (_cursorLocation == CursorLocationType.OnTile)
             { 
                 _tileUnderPointer = _tiles[TileIndex(col, row)];
-                OnTileUnderPointerCame();
+                CraftingDelegatesContainer.EventTileUnderPointerCame?.Invoke(_tileUnderPointer);
             }
         }
     }
 
-    private void OnTileUnderPointerCame()
+    public virtual void PlaceStack(UIStack stack, Vector2Int placeDelta, out UIStack pushedOutStack)
     {
-        CraftingDelegatesContainer.EventTileUnderPointerCame?.Invoke(_tileUnderPointer);
-        if (CraftingDelegatesContainer.IsStackSelected())
-        {
-            return;
-        }
+        Assert.IsTrue(_tileUnderPointer == null);
+        pushedOutStack = null;
 
-        _tileUnderPointer.HighLightState();
-    }
-
-    private void OnTileUnderPointerGone()
-    {
-        CraftingDelegatesContainer.EventTileUnderPointerGone?.Invoke();
-        if (CraftingDelegatesContainer.IsStackSelected())
-        {
-            return;
-        }
-
-        _tileUnderPointer.DefaultState();
-    }
-
-    private void OnStackPlacementUnderPointer(UIStack stack, Vector2Int tilePosDelta)
-    {
-        if (_tileUnderPointer == null)
-        {
-            return;
-        }
-
-        stack.Data.TilePos = _tileUnderPointer.Pos + tilePosDelta;
+        stack.Data.TilePos = _tileUnderPointer.Pos + placeDelta;
         UpdateStackAnchPos(stack);
         AssignStackToTilesReferences(stack);
-    }
-
-    private void AddExistingStack(UIStack uiStack, Vector2Int tilePos)
-    {
-        uiStack.Data.TilePos = tilePos;
-        UpdateStackAnchPos(uiStack);
-        AssignStackToTilesReferences(uiStack);
-    }
-
-    private UIStack AddNewStack(UIStackData stackData)
-    { 
-        UIStack uiStack = PoolingDelegatesContainer.SpawnStack();
-        uiStack.InitializeWithData(stackData, _itemsParent);
-        Vector2Int stackSizeInt = CraftingDelegatesContainer.GetItemSO(stackData.ItemTypeID).Size;
-
-        UpdateStackAnchPos(uiStack);
-        AssignStackToTilesReferences(uiStack);
-        
-        return uiStack;
-    }
-
-    private UIStack AddNewStack(ItemSO itemType, int itemAmount, Vector2Int tilePos)
-    {
-        UIStack uiStack = PoolingDelegatesContainer.SpawnStack();
-
-        UIStackData stackData = new UIStackData();
-        stackData.ItemAmount = itemAmount;
-        stackData.ItemTypeID = itemType.ID;
-        stackData.TilePos = tilePos;
-
-        uiStack.InitializeWithData(stackData, _itemsParent);
-        UpdateStackAnchPos(uiStack);
-        AssignStackToTilesReferences(uiStack);
-
-        return uiStack;
     }
 
     protected void UpdateStackAnchPos(UIStack stack)
     {
         Vector2Int tilePos = stack.Data.TilePos;
         Vector2 anchPos = _tiles[TileIndex(tilePos)].Rect.anchoredPosition;
-        print(tilePos);
         Vector2Int sizeInt = stack.ItemType.Size;
         Vector2 stackSize = new Vector2(_tileSizePixels * sizeInt.x, _tileSizePixels * sizeInt.y);
         stack.UpdateRect(anchPos, stackSize, _itemsParent);
@@ -432,7 +316,7 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
         // Vector2 anchPos = (startTile.anchoredPosition + endTile.anchoredPosition + adjust) / 2;
     }
 
-    private void AssignStackToTilesReferences(UIStack stack)
+    protected void AssignStackToTilesReferences(UIStack stack)
     {
         Vector2Int pos = stack.Data.TilePos;
         for (int i = 0; i < stack.Size.x; i++)

@@ -12,7 +12,8 @@ public class UIStackManipulator : MonoBehaviour
     private Vector2 _pickUpDelta = Vector2.up;
 
     private UIStack _selectedStack;
-    private Vector2Int[] _selectedStackFillState;
+    private Vector2Int _stackSelectionLocalPos;
+
     private UITile _tileUnderPointer;
     private bool _isCurrentPlacementPosValid;
 
@@ -23,22 +24,22 @@ public class UIStackManipulator : MonoBehaviour
 
     private void Awake()
     {
-        CraftingDelegatesContainer.EventTileUnderPointerCame += OnTileUnderPointerCame;
-        CraftingDelegatesContainer.EventTileUnderPointerGone += OnTileUnderPointerGone;
-
         CraftingDelegatesContainer.EventStackWasSelected += OnStackWasSelected;
         // CraftingDelegatesContainer.FuncSelectedStack += GetSelectedStack;
+
+        CraftingDelegatesContainer.EventTileUnderPointerCame += OnTileUnderPointerCame;
+        CraftingDelegatesContainer.EventTileUnderPointerGone += OnTileUnderPointerGone;
 
         CraftingDelegatesContainer.IsStackSelected += IsStackSelected;
     }
 
     private void OnDestroy()
     { 
-        CraftingDelegatesContainer.EventTileUnderPointerCame -= OnTileUnderPointerCame;
-        CraftingDelegatesContainer.EventTileUnderPointerGone -= OnTileUnderPointerGone;
-
         CraftingDelegatesContainer.EventStackWasSelected -= OnStackWasSelected;
         // CraftingDelegatesContainer.FuncSelectedStack -= GetSelectedStack;
+
+        CraftingDelegatesContainer.EventTileUnderPointerCame -= OnTileUnderPointerCame;
+        CraftingDelegatesContainer.EventTileUnderPointerGone -= OnTileUnderPointerGone;
 
         CraftingDelegatesContainer.IsStackSelected -= IsStackSelected;
     }
@@ -46,6 +47,16 @@ public class UIStackManipulator : MonoBehaviour
     private void Start()
     {
         _pointerEventsUpdater = UIDelegatesContainer.GetEventsUpdater();
+    }
+
+    private UIStack GetSelectedStack()
+    {
+        return _selectedStack;
+    }
+
+    private bool IsStackSelected()
+    {
+        return _selectedStack != null;
     }
 
     private void OnTileUnderPointerCame(UITile tile)
@@ -58,14 +69,19 @@ public class UIStackManipulator : MonoBehaviour
             return;
         }
 
-        _isCurrentPlacementPosValid =
-            CraftingDelegatesContainer.CheckSelectedStackFillStateValid(_selectedStackFillState, _tileUnderPointer.Pos);
+        _isCurrentPlacementPosValid = CraftingDelegatesContainer.IsCurrentPlacementPosValid(
+            _selectedStack, 
+            _stackSelectionLocalPos, 
+            _tileUnderPointer.Pos
+        );
+
         if (!_isCurrentPlacementPosValid)
         {
             return;
         }
 
-        CraftingDelegatesContainer.HighlightTilesDelta?.Invoke(_selectedStackFillState, _tileUnderPointer.Pos);
+        CraftingDelegatesContainer.HighlightTilesUnderSelectedStack?
+            .Invoke(_selectedStack, _tileUnderPointer.Pos);
     }
 
     private void OnTileUnderPointerGone()
@@ -73,22 +89,29 @@ public class UIStackManipulator : MonoBehaviour
         _tileUnderPointer.UndoDebugColor();
         if (_selectedStack == null)
         {
-            // _tileUnderPointer = null;
+            _isCurrentPlacementPosValid = false;
+            _tileUnderPointer = null;
             return;
         }
 
         if (!_isCurrentPlacementPosValid)
         {
+            _tileUnderPointer = null;
             return;
         }
 
-        CraftingDelegatesContainer.DefaultTilesDelta?.Invoke(_selectedStackFillState, _tileUnderPointer.Pos);
-        // _tileUnderPointer = null;
+        CraftingDelegatesContainer.DefaultLastTilesUnderSelectedStack?
+            .Invoke(_selectedStack, _tileUnderPointer.Pos);
+        
+        _isCurrentPlacementPosValid = false;
+        _tileUnderPointer = null;
     }
 
 
-    private void OnStackWasSelected(UIStack stack)
+    private void OnStackWasSelected(UIStack stack, Vector2Int stackSelectionLocalPosArg)
     {
+        _stackSelectionLocalPos = stackSelectionLocalPosArg;
+
         if (stack.Data.ItemAmount > 1)
         {
             _selectedStack = PoolingDelegatesContainer.SpawnStack();
@@ -102,40 +125,15 @@ public class UIStackManipulator : MonoBehaviour
             _selectedStack = stack;
         }
 
-        InitializeSelectedFillState(_selectedStack);
+        _isCurrentPlacementPosValid = CraftingDelegatesContainer.IsCurrentPlacementPosValid(
+            _selectedStack, 
+            _stackSelectionLocalPos,
+            _tileUnderPointer.Pos
+        );
+        CraftingDelegatesContainer.HighlightTilesUnderSelectedStack?.Invoke(_selectedStack, _tileUnderPointer.Pos);
 
-        _isCurrentPlacementPosValid =
-            CraftingDelegatesContainer.CheckSelectedStackFillStateValid(_selectedStackFillState, _tileUnderPointer.Pos);
-        CraftingDelegatesContainer.HighlightTilesDelta?.Invoke(_selectedStackFillState, _tileUnderPointer.Pos);
-
-        if (_stackFollowSequence == null)
-        {
-            _stackFollowSequence = StackFollowSequence();
-            StartCoroutine(_stackFollowSequence);
-        }
-    }
-
-    // _selectedStack is already initialized by pushedOut
-    private void CheckPushedOutStackSelection()
-    {
-        if (_selectedStack == null)
-        {
-            return;
-        }
-        InitializeSelectedFillState(_selectedStack);
-
-        _isCurrentPlacementPosValid =
-            CraftingDelegatesContainer.CheckSelectedStackFillStateValid(_selectedStackFillState, _tileUnderPointer.Pos);
-    }
-
-    private UIStack GetSelectedStack()
-    {
-        return _selectedStack;
-    }
-
-    private bool IsStackSelected()
-    {
-        return _selectedStack != null;
+        _stackFollowSequence = StackFollowSequence();
+        StartCoroutine(_stackFollowSequence);
     }
 
     private IEnumerator StackFollowSequence()
@@ -152,24 +150,29 @@ public class UIStackManipulator : MonoBehaviour
             {
                 if (_isCurrentPlacementPosValid)
                 {
-                    UIStack toPlace = _selectedStack;
-                    _selectedStack = CraftingDelegatesContainer.GetPushedOutByPlacementStack();
+                    UIStack pushedOutStack = null;
+                    CraftingDelegatesContainer.PlaceStackUnderPointer?.Invoke(
+                        _selectedStack, 
+                        _stackSelectionLocalPos, 
+                        out pushedOutStack
+                    );
 
-                    CraftingDelegatesContainer.PlaceStackUnderPointer?.Invoke(toPlace, _selectedStackFillState[0]);
-                    CheckPushedOutStackSelection();
-                    if (_selectedStack == null)
-                    { 
+                    if (pushedOutStack == null)
+                    {
+                        _selectedStack = null;
                         _pointerEventsUpdater.UnregisterMovingUI();
                         _stackFollowSequence = null;
                         yield break;
                     }
+
+                    CheckPushedOutStackSelection();
 
                     _prevPos = Input.mousePosition;
                     _prevPos -= _pickUpDelta;
                 }
                 else
                 { 
-                    CraftingDelegatesContainer.ReturnStackToPreviousPlace(_selectedStack);
+                    CraftingDelegatesContainer.ReturnStackToItemsWindow(_selectedStack);
                 }
             }
 
@@ -179,8 +182,27 @@ public class UIStackManipulator : MonoBehaviour
             _pointerEventsUpdater.NotifyFinishedMove();
             yield return null;
         }
+#endif
+    }
 
- #elif UNITY_ANDROID
+    // _selectedStack is already initialized by pushedOut
+    private void CheckPushedOutStackSelection()
+    {
+        if (_selectedStack == null)
+        {
+            return;
+        }
+        _isCurrentPlacementPosValid = CraftingDelegatesContainer.IsCurrentPlacementPosValid(
+            _selectedStack,
+            _stackSelectionLocalPos,
+            _tileUnderPointer.Pos
+        );
+    }
+}
+
+// Android implementations
+/*
+    #elif UNITY_ANDROID
         Touch touch = Input.GetTouch(0);
         _prevPos = touch.position;
         _prevPos -= _pickUpDelta;
@@ -220,18 +242,4 @@ public class UIStackManipulator : MonoBehaviour
             UIEventsContainer.EventMovingUIFinishedMove?.Invoke();
             yield return null;
         }
-#endif
-    }
-
-    private void InitializeSelectedFillState(UIStack stack)
-    { 
-        var fillState = stack.GetFillState();
-        _selectedStackFillState = new Vector2Int[fillState.Length];
-        fillState.CopyTo(_selectedStackFillState, 0);
-        Vector2Int selectedTileIndex = _tileUnderPointer.Pos;
-        for (int i = 0; i < _selectedStackFillState.Length; i++)
-        {
-            _selectedStackFillState[i] -= selectedTileIndex;
-        }
-    }
-}
+*/

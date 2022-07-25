@@ -91,6 +91,26 @@ namespace Orazum.UI
             }
         }
 
+        public Vector2Int GetLocalPoint(RectTransform rect, out bool isValid)
+        {
+#if UNITY_EDITOR
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(rect,
+                Input.mousePosition, null, out Vector2 localPoint
+            );
+            isValid = true;
+#elif UNITY_ANDROID
+            if (Input.touchCount != 1)
+            {
+                isValid = false;
+                return Vector2Int.zero;
+            }
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(rect,
+                _currentTouch.position, null, out Vector2 localPoint
+            );
+#endif
+            return new Vector2Int((int)localPoint.x, (int)localPoint.y);
+        }
+
         private void Update()
         {
             if (_movingUICount == 0)
