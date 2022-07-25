@@ -212,14 +212,17 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
         }
 
         if (_state == StateType.OneTiled)
-        { 
-            CraftingDelegatesContainer.EventStackWasSelected?.Invoke(this, Vector2Int.zero);
+        {
+            InputDelegatesContainer.SelectStackCommand?.Invoke(this, Vector2Int.zero);
         }
         else
         {
             Vector2Int localPoint = UIDelegatesContainer.GetEventsUpdater().GetLocalPoint(Rect, out bool isValid);
+            // it returns as a negative with current sceen setup;
+            // SceneChange: Hope that it will not change.
+            localPoint.y = -localPoint.y; 
             if (!isValid)
-            { 
+            {
                 return;
             }
 
@@ -248,9 +251,9 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
         CraftingDelegatesContainer.DefaultPlacedStack?.Invoke(this);
     }
 
-    public Transform GetTransform()
+    public void ChangeSizeDuringTransition(Vector2 newSize)
     {
-        return transform;
+        _rect.sizeDelta = newSize;
     }
 }
 

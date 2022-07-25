@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Orazum.UI 
 {
-    public class UIEventsUpdater : MonoBehaviour
+    public class UIPointerEventsUpdater : MonoBehaviour
     {
         private const float SQR_MAGNITUDE_POINTER_TOUCH_TOLERANCE = 10;
 
@@ -282,7 +282,7 @@ namespace Orazum.UI
             }
         }
 
-        private UIEventsUpdater GetUpdater()
+        private UIPointerEventsUpdater GetUpdater()
         {
             return this;
         }

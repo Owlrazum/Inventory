@@ -14,18 +14,25 @@ public class TileWindowsController : MonoBehaviour
     private void Awake()
     {
         CraftingDelegatesContainer.GetTileSizeInCraftWindow += GetTileSizeInCraftWindow;
+        CraftingDelegatesContainer.GetTileSizeInItemsWindow += GetTileSizeInItemsWindow;
         CraftingDelegatesContainer.PlaceStackUnderPointer += OnStackPlacement;
     }
 
     private void OnDestroy()
     { 
         CraftingDelegatesContainer.GetTileSizeInCraftWindow -= GetTileSizeInCraftWindow;
+        CraftingDelegatesContainer.GetTileSizeInItemsWindow -= GetTileSizeInItemsWindow;
         CraftingDelegatesContainer.PlaceStackUnderPointer -= OnStackPlacement;
     }
 
     private int GetTileSizeInCraftWindow()
     {
         return _craftWindow.TileSizePixels;
+    }
+
+    private int GetTileSizeInItemsWindow()
+    {
+        return _itemsWindow.TileSizePixels;
     }
 
     private void OnStackPlacement(UIStack toPlace, Vector2Int pos, out UIStack pushedOutStack)

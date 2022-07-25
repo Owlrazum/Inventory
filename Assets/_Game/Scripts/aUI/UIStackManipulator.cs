@@ -20,11 +20,11 @@ public class UIStackManipulator : MonoBehaviour
     private IEnumerator _stackFollowSequence;
     private Vector2 _prevPos;
 
-    private UIEventsUpdater _pointerEventsUpdater;
+    private UIPointerEventsUpdater _pointerEventsUpdater;
 
     private void Awake()
     {
-        CraftingDelegatesContainer.EventStackWasSelected += OnStackWasSelected;
+        InputDelegatesContainer.SelectStackCommand += OnSelectStackCommand;
         // CraftingDelegatesContainer.FuncSelectedStack += GetSelectedStack;
 
         CraftingDelegatesContainer.EventTileUnderPointerCame += OnTileUnderPointerCame;
@@ -35,7 +35,7 @@ public class UIStackManipulator : MonoBehaviour
 
     private void OnDestroy()
     { 
-        CraftingDelegatesContainer.EventStackWasSelected -= OnStackWasSelected;
+        InputDelegatesContainer.SelectStackCommand -= OnSelectStackCommand;
         // CraftingDelegatesContainer.FuncSelectedStack -= GetSelectedStack;
 
         CraftingDelegatesContainer.EventTileUnderPointerCame -= OnTileUnderPointerCame;
@@ -108,7 +108,7 @@ public class UIStackManipulator : MonoBehaviour
     }
 
 
-    private void OnStackWasSelected(UIStack stack, Vector2Int stackSelectionLocalPosArg)
+    private void OnSelectStackCommand(UIStack stack, Vector2Int stackSelectionLocalPosArg)
     {
         _stackSelectionLocalPos = stackSelectionLocalPosArg;
 
@@ -124,6 +124,8 @@ public class UIStackManipulator : MonoBehaviour
         { 
             _selectedStack = stack;
         }
+        
+        CraftingDelegatesContainer.EventStackWasSelected?.Invoke(_selectedStack);
 
         _isCurrentPlacementPosValid = CraftingDelegatesContainer.IsCurrentPlacementPosValid(
             _selectedStack, 

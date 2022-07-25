@@ -17,7 +17,7 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
 
     [SerializeField]
     private int _tileSizePixels;
-    public int TileSizePixels;
+    public int TileSizePixels { get { return _tileSizePixels; } }
 
     [SerializeField]
     private int _gapSize;
