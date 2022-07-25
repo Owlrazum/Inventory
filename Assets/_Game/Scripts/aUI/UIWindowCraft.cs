@@ -15,7 +15,7 @@ public class UIWindowCraft : UITilesWindow
         CraftingDelegatesContainer.IsCurrentPlacementPosValid += CheckIfSelectedStackFillStateValid;
 
         CraftingDelegatesContainer.HighlightTilesUnderSelectedStack += HighlightTilesUnderSelectedStack;
-        CraftingDelegatesContainer.DefaultLastTilesUnderSelectedStack   += OnTilesDeltaShouldDefault;
+        CraftingDelegatesContainer.DefaultLastTilesUnderSelectedStack += DefaultLastTilesUnderSelectedStack;
 
         // CraftingDelegatesContainer.EventStackWasSelected += OnStackWasSelected;
     }
@@ -30,7 +30,7 @@ public class UIWindowCraft : UITilesWindow
         CraftingDelegatesContainer.IsCurrentPlacementPosValid -= CheckIfSelectedStackFillStateValid;
 
         CraftingDelegatesContainer.HighlightTilesUnderSelectedStack -= HighlightTilesUnderSelectedStack;
-        CraftingDelegatesContainer.DefaultLastTilesUnderSelectedStack   -= OnTilesDeltaShouldDefault;
+        CraftingDelegatesContainer.DefaultLastTilesUnderSelectedStack -= DefaultLastTilesUnderSelectedStack;
 
         // CraftingDelegatesContainer.EventStackWasSelected -= OnStackWasSelected;
     }
@@ -116,18 +116,40 @@ public class UIWindowCraft : UITilesWindow
 
     private void HighlightTilesUnderSelectedStack(UIStack uiStack, Vector2Int tilePos)
     {
-        // foreach (var pos in tilesDelta)
-        // {
-        //     _tiles[TileIndex(tilePos + pos)].HighLightState();
-        // }
+        print(tilePos.y + uiStack.Size.y);
+        print(tilePos.x + uiStack.Size.x);
+        if (tilePos.y + uiStack.Size.y > _gridResolution.y ||
+            tilePos.x + uiStack.Size.x > _gridResolution.x)
+        {
+            return;
+        }
+
+        for (int y = 0; y < uiStack.Size.y; y++)
+        {
+            for (int x = 0; x < uiStack.Size.x; x++)
+            {
+                Vector2Int delta = new Vector2Int(x, y);
+                _tiles[TileIndex(tilePos + delta)].HighLightState();
+            }
+        }
     }
 
-    private void OnTilesDeltaShouldDefault(UIStack uiStack, Vector2Int tilePos)
+    private void DefaultLastTilesUnderSelectedStack(UIStack uiStack, Vector2Int tilePos)
     {
-        // foreach (var pos in tilesDelta)
-        // {
-        //     _tiles[TileIndex(tilePos + pos)].DefaultState();
-        // }
+        if (tilePos.y + uiStack.Size.y > _gridResolution.y ||
+            tilePos.x + uiStack.Size.x > _gridResolution.x)
+        {
+            return;
+        }
+
+        for (int y = 0; y < uiStack.Size.y; y++)
+        {
+            for (int x = 0; x < uiStack.Size.x; x++)
+            {
+                Vector2Int delta = new Vector2Int(x, y);
+                _tiles[TileIndex(tilePos + delta)].DefaultState();
+            }
+        }
     }
 
     private void OnStackWasSelected(UIStack stack)

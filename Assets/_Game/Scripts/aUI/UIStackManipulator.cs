@@ -75,33 +75,25 @@ public class UIStackManipulator : MonoBehaviour
             _tileUnderPointer.Pos
         );
 
-        if (!_isCurrentPlacementPosValid)
+        if (!_isCurrentPlacementPosValid || _selectedStack.WindowState != WindowTransitionState.CraftWindow)
         {
             return;
         }
 
         CraftingDelegatesContainer.HighlightTilesUnderSelectedStack?
-            .Invoke(_selectedStack, _tileUnderPointer.Pos);
+            .Invoke(_selectedStack, _tileUnderPointer.Pos - _stackSelectionLocalPos);
     }
 
     private void OnTileUnderPointerGone()
     {
         _tileUnderPointer.UndoDebugColor();
-        if (_selectedStack == null)
-        {
-            _isCurrentPlacementPosValid = false;
-            _tileUnderPointer = null;
-            return;
-        }
 
-        if (!_isCurrentPlacementPosValid)
+        if (_selectedStack != null)
         {
-            _tileUnderPointer = null;
-            return;
+            print("Default tiles");
+            CraftingDelegatesContainer.DefaultLastTilesUnderSelectedStack?
+                .Invoke(_selectedStack, _tileUnderPointer.Pos - _stackSelectionLocalPos);   
         }
-
-        CraftingDelegatesContainer.DefaultLastTilesUnderSelectedStack?
-            .Invoke(_selectedStack, _tileUnderPointer.Pos);
         
         _isCurrentPlacementPosValid = false;
         _tileUnderPointer = null;
@@ -132,7 +124,11 @@ public class UIStackManipulator : MonoBehaviour
             _stackSelectionLocalPos,
             _tileUnderPointer.Pos
         );
-        CraftingDelegatesContainer.HighlightTilesUnderSelectedStack?.Invoke(_selectedStack, _tileUnderPointer.Pos);
+
+        if (_selectedStack.WindowState == WindowTransitionState.CraftWindow)
+        { 
+            CraftingDelegatesContainer.HighlightTilesUnderSelectedStack?.Invoke(_selectedStack, _tileUnderPointer.Pos);
+        }
 
         _stackFollowSequence = StackFollowSequence();
         StartCoroutine(_stackFollowSequence);

@@ -69,9 +69,11 @@ public class UIStackWindowTransition : MonoBehaviour
             _trackedStack.Rect.SetParent(prevParent, true);
             if (trackPos < 0)
             {
-                if (CraftingDelegatesContainer.GetCursorLocationItemsWindow() == CursorLocationType.InsideWindow)
+                if (CraftingDelegatesContainer.GetCursorLocationItemsWindow() == CursorLocationType.InsideWindow ||
+                    CraftingDelegatesContainer.GetCursorLocationCraftWindow() == CursorLocationType.OnTile)
                 { 
                     _trackedStack.WindowState = WindowTransitionState.ItemsWindow;
+                    print("Inside items window");
                 }
                 else
                 { 
@@ -83,9 +85,11 @@ public class UIStackWindowTransition : MonoBehaviour
             }
             else if (trackPos > _borderRange)
             {
-                if (CraftingDelegatesContainer.GetCursorLocationCraftWindow() == CursorLocationType.InsideWindow)
+                if (CraftingDelegatesContainer.GetCursorLocationCraftWindow() == CursorLocationType.InsideWindow ||
+                    CraftingDelegatesContainer.GetCursorLocationCraftWindow() == CursorLocationType.OnTile)
                 { 
                     _trackedStack.WindowState = WindowTransitionState.CraftWindow;
+                    print("Inside craft window");
                 }
                 else
                 { 
