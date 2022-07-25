@@ -3,6 +3,14 @@ using UnityEngine.Assertions;
 using UnityEngine;
 using Orazum.UI;
 
+public enum CursorLocationType
+{
+    NotInitialized,
+    OnTile,
+    InsideWindow,
+    OutsideWindow
+}
+
 // All sizes are in screen space pixels;
 public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
 { 
@@ -16,7 +24,7 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
     protected UITile[] _tiles;
 
     [SerializeField]
-    private int _tileSizePixels;
+    protected int _tileSizePixels;
     public int TileSizePixels { get { return _tileSizePixels; } }
 
     [SerializeField]
@@ -30,14 +38,8 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
 
     protected HashSet<int> _tilesInstanceIDs;
 
-    protected enum CursorLocationType
-    {
-        NotInitialized,
-        OnTile,
-        InsideWindow,
-        OutsideWindow
-    }
-    protected CursorLocationType _cursorLocation;
+    private CursorLocationType _cursorLocation;
+    public CursorLocationType CursorLocation { get { return _cursorLocation; } }
 
     protected UITile _tileUnderPointer; 
 
@@ -301,7 +303,7 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
         AssignStackToTilesReferences(stack);
     }
 
-    protected void UpdateStackAnchPos(UIStack stack)
+    protected virtual void UpdateStackAnchPos(UIStack stack)
     {
         Vector2Int tilePos = stack.Data.TilePos;
         Vector2 anchPos = _tiles[TileIndex(tilePos)].Rect.anchoredPosition;

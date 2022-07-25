@@ -15,6 +15,11 @@ public class TileWindowsController : MonoBehaviour
     {
         CraftingDelegatesContainer.GetTileSizeInCraftWindow += GetTileSizeInCraftWindow;
         CraftingDelegatesContainer.GetTileSizeInItemsWindow += GetTileSizeInItemsWindow;
+
+        CraftingDelegatesContainer.GetCursorLocationCraftWindow += GetCursorLocationCraftWindow;
+        CraftingDelegatesContainer.GetCursorLocationItemsWindow += GetCursorLocationItemsWindow;
+        
+
         CraftingDelegatesContainer.PlaceStackUnderPointer += OnStackPlacement;
     }
 
@@ -22,6 +27,10 @@ public class TileWindowsController : MonoBehaviour
     { 
         CraftingDelegatesContainer.GetTileSizeInCraftWindow -= GetTileSizeInCraftWindow;
         CraftingDelegatesContainer.GetTileSizeInItemsWindow -= GetTileSizeInItemsWindow;
+
+        CraftingDelegatesContainer.GetCursorLocationCraftWindow -= GetCursorLocationCraftWindow;
+        CraftingDelegatesContainer.GetCursorLocationItemsWindow -= GetCursorLocationItemsWindow;
+
         CraftingDelegatesContainer.PlaceStackUnderPointer -= OnStackPlacement;
     }
 
@@ -33,6 +42,16 @@ public class TileWindowsController : MonoBehaviour
     private int GetTileSizeInItemsWindow()
     {
         return _itemsWindow.TileSizePixels;
+    }
+
+    private CursorLocationType GetCursorLocationCraftWindow()
+    {
+        return _craftWindow.CursorLocation;
+    }
+
+    private CursorLocationType GetCursorLocationItemsWindow()
+    { 
+        return _itemsWindow.CursorLocation;
     }
 
     private void OnStackPlacement(UIStack toPlace, Vector2Int pos, out UIStack pushedOutStack)

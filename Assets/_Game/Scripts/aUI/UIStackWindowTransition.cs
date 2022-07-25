@@ -6,7 +6,7 @@ using UnityEngine;
 /// craftWindow and itemsWindow
 /// </summary>
 [RequireComponent(typeof(RectTransform))]
-public class UIStackWindowTransitionZone : MonoBehaviour
+public class UIStackWindowTransition : MonoBehaviour
 {
     private int _craftWindowBorder;
     private int _itemsWindowBorder;
@@ -14,6 +14,9 @@ public class UIStackWindowTransitionZone : MonoBehaviour
 
     private int _craftWindowTileSize;
     private int _itemsWindowTileSize;
+
+    private Vector2Int _craftWindowStackSize;
+    private Vector2Int _itemsWindowStackSize;
 
     private RectTransform _rect;
 
@@ -47,6 +50,10 @@ public class UIStackWindowTransitionZone : MonoBehaviour
     private void OnStackWasSelected(UIStack selectedStack)
     {
         _trackedStack = selectedStack;
+
+        _craftWindowStackSize = _trackedStack.Size * _craftWindowTileSize;
+        _itemsWindowStackSize = new Vector2Int(_itemsWindowTileSize, _itemsWindowTileSize);
+
         _trackingCoroutine = TrackingCoroutine();
         StartCoroutine(_trackingCoroutine);
     }
@@ -57,20 +64,44 @@ public class UIStackWindowTransitionZone : MonoBehaviour
         {
             yield return null;
             Transform prevParent = _trackedStack.Rect.parent;
-            // print(_trackedStack.Rect.anchoredPosition.y + " pos");
             _trackedStack.Rect.SetParent(_rect, true);
             int trackPos = (int)(_trackedStack.Rect.anchoredPosition.y + _trackedStack.Rect.rect.size.y / 2);
             _trackedStack.Rect.SetParent(prevParent, true);
-            print(trackPos + " 1 " + _borderRange);
-            if (trackPos < 0 || trackPos > _borderRange)
+            if (trackPos < 0)
             {
+                if (CraftingDelegatesContainer.GetCursorLocationItemsWindow() == CursorLocationType.InsideWindow)
+                { 
+                    _trackedStack.WindowState = WindowTransitionState.ItemsWindow;
+                }
+                else
+                { 
+                    _trackedStack.WindowState = WindowTransitionState.Transition;
+                }
+
+                _trackedStack.ChangeSizeDuringTransition(_itemsWindowStackSize);
+                continue;
+            }
+            else if (trackPos > _borderRange)
+            {
+                if (CraftingDelegatesContainer.GetCursorLocationCraftWindow() == CursorLocationType.InsideWindow)
+                { 
+                    _trackedStack.WindowState = WindowTransitionState.CraftWindow;
+                }
+                else
+                { 
+                    _trackedStack.WindowState = WindowTransitionState.Transition;
+                }
+
+                _trackedStack.ChangeSizeDuringTransition(_craftWindowStackSize);
                 continue;
             }
 
+            _trackedStack.WindowState = WindowTransitionState.Transition;
+
             float lerpParam = trackPos * 1.0f / _borderRange;
-            print(lerpParam);
-            float size = Mathf.Lerp(_itemsWindowTileSize, _craftWindowTileSize, lerpParam);
-            _trackedStack.ChangeSizeDuringTransition(Vector2.one * size);
+            Vector2 sizeFloat = Vector2.Lerp(_itemsWindowStackSize, _craftWindowStackSize, lerpParam);
+            Vector2Int size = new Vector2Int((int)sizeFloat.x, (int)sizeFloat.y);
+            _trackedStack.ChangeSizeDuringTransition(size);
         }
     }
 }

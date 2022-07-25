@@ -8,6 +8,13 @@ using TMPro;
 
 using Orazum.UI;
 
+public enum WindowTransitionState
+{
+    ItemsWindow,
+    Transition,
+    CraftWindow
+}
+
 [System.Serializable]
 public class UIStackData
 {
@@ -84,14 +91,11 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
         }
     }
 
-    public enum StateType
+    public WindowTransitionState WindowState 
     { 
-        OneTiled,
-        Transition,
-        MultiTiled
+        get; 
+        set; 
     }
-    private StateType _state;
-    public StateType State { get { return _state; } }
 
     public void InitializeWithData(UIStackData stackData, RectTransform boundingRect)
     {
@@ -143,6 +147,7 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
     {
         _rect.anchoredPosition = anchoredPos;
         _rect.sizeDelta = sizeDelta;
+        
         if (newParent != null)
         { 
             _rect.SetParent(newParent, false);
@@ -211,7 +216,7 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
             return;
         }
 
-        if (_state == StateType.OneTiled)
+        if (WindowState == WindowTransitionState.ItemsWindow)
         {
             InputDelegatesContainer.SelectStackCommand?.Invoke(this, Vector2Int.zero);
         }

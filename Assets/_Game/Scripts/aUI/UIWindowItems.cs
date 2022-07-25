@@ -3,9 +3,12 @@ using UnityEngine;
 [RequireComponent(typeof(RectTransform))]
 public class UIWindowItems : UITilesWindow
 {
+    private Vector2Int _defaultStackSize;
     protected override void Awake()
     {
         base.Awake();
+        _defaultStackSize = new Vector2Int(_tileSizePixels, _tileSizePixels);
+
         GameDelegatesContainer.StartLevel += OnPrepareLevel;
     }
 
@@ -32,5 +35,12 @@ public class UIWindowItems : UITilesWindow
             uiStack.InitializeWithData(stackData, _itemsParent);
             UpdateStackAnchPos(uiStack);
         }
+    }
+
+    protected override void UpdateStackAnchPos(UIStack stack)
+    {
+        Vector2Int tilePos = stack.Data.TilePos;
+        Vector2 anchPos = _tiles[TileIndex(tilePos)].Rect.anchoredPosition;
+        stack.UpdateRect(anchPos, _defaultStackSize, _itemsParent);
     }
 }
