@@ -69,8 +69,8 @@ public class UIWindowCraft : UITilesWindow
         {
             return false;
         }
-        if (tilePos.y + stackSize.y >= _gridResolution.y ||
-            tilePos.x + stackSize.x >= _gridResolution.x)
+        if (tilePos.y + stackSize.y - 1 >= _gridResolution.y ||
+            tilePos.x + stackSize.x - 1 >= _gridResolution.x)
         {
             return false;
         }
