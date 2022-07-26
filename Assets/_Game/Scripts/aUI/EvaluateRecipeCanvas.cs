@@ -22,6 +22,7 @@ public class EvaluateRecipeCanvas : MonoBehaviour
 
     private void OnEvaluateButtonPressed()
     {
+        print("-------===========--------");
         RecipeQualityType recipeQuality = CraftingDelegatesContainer.EvaluateRecipeQuality();
         print("button pressed, the quality is " + recipeQuality);
         if (recipeQuality == RecipeQualityType.NoRecipe)

@@ -20,6 +20,12 @@ public class ItemSO : ScriptableObject
 
     // Craft requirement assumes that zero pos is top left corner
 
+    // public string RecipeRequirements
+    [Help("Imagine a box with certain size, the top left corner has position (0, 0), " +
+          "\nbottomLeft has (0, boxSize), \ntopRight (boxSize,  0), \nbottomRight(boxSize, boxSize)", UnityEditor.MessageType.Info)]
+    [SerializeField]
+    private bool _justToShowHelpBox;
+
     public RecipeItemLocation[] PerfectItemsData;
     public RecipeItemLocation[] FirstGoodItemsData;
     public RecipeItemLocation[] SecondGoodItemsData;

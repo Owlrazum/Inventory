@@ -19,7 +19,7 @@ public class UIWindowCraft : UITilesWindow
         base.Subscribe();
 
         CraftingDelegatesContainer.GetCraftTiles += GetTiles;
-        CraftingDelegatesContainer.GetCraftTilesColumnCount += GetCraftTilesColumnCount;
+        CraftingDelegatesContainer.GetCraftTilesGridResolution += GetCraftTilesGridResolution;
 
         CraftingDelegatesContainer.HighlightTilesInCraftWindow += HighlightTiles;
         CraftingDelegatesContainer.DefaultLastHighlightInCraftWindow += DefaultLastHighlightedTiles;
@@ -32,7 +32,7 @@ public class UIWindowCraft : UITilesWindow
         base.OnDestroy();
 
         CraftingDelegatesContainer.GetCraftTiles -= GetTiles;
-        CraftingDelegatesContainer.GetCraftTilesColumnCount -= GetCraftTilesColumnCount;
+        CraftingDelegatesContainer.GetCraftTilesGridResolution -= GetCraftTilesGridResolution;
 
         CraftingDelegatesContainer.HighlightTilesInCraftWindow -= HighlightTiles;
         CraftingDelegatesContainer.DefaultLastHighlightInCraftWindow -= DefaultLastHighlightedTiles;
@@ -45,9 +45,9 @@ public class UIWindowCraft : UITilesWindow
         return _tiles;
     }
 
-    public int GetCraftTilesColumnCount()
+    public Vector2Int GetCraftTilesGridResolution()
     {
-        return _gridResolution.x;
+        return _gridResolution;
     }
 
     public override void PlaceStack(UIStack uiStack, Vector2Int tilePos)

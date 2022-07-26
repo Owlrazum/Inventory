@@ -89,12 +89,10 @@ public class UIWindowItems : UITilesWindow
         Assert.IsTrue(_itemsTilesRelation[stack.ItemType.ID] == tilePos);
         if (_tiles[tilePos].PlacedStack == null)
         {
-            print("placed stack is null");
             base.PlaceStack(stack, tilePos2D);
         }
         else
         {
-            print("jsjs");
             _tiles[tilePos].PlacedStack.Data.ItemAmount++;
             PoolingDelegatesContainer.DespawnStack(stack);
         }

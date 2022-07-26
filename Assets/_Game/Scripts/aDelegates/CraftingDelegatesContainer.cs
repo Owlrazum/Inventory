@@ -11,7 +11,7 @@ public static class CraftingDelegatesContainer
     public static Func<CursorLocationType> GetCursorLocationItemsWindow;
 
     public static Func<UITile[]> GetCraftTiles;
-    public static Func<int> GetCraftTilesColumnCount;
+    public static Func<Vector2Int> GetCraftTilesGridResolution;
 
     public static Action<UITile> EventTileUnderPointerCame;
     public static Action EventTileUnderPointerGone;
