@@ -1,12 +1,13 @@
 using System;
 
+using Unity.Mathematics;
 using UnityEngine;
 
-public enum RecipeQualityType
+[Serializable]
+public class RecipeItemLocation
 { 
-    Perfect,
-    Good,
-    Bad
+    public int ID;
+    public int2 Pos;
 }
 
 [CreateAssetMenu(fileName = "Item", menuName = "Crafting/Item", order = 1)]
@@ -24,13 +25,6 @@ public class ItemSO : ScriptableObject
     public RecipeItemLocation[] SecondGoodItemsData;
     public RecipeItemLocation[] FirstBadItemsData;
     public RecipeItemLocation[] SecondBadItemsData;
-
-    [Serializable]
-    public class RecipeItemLocation
-    { 
-        public int ID;
-        public Vector2Int Pos;
-    }
 
     public override bool Equals(object other)
     {

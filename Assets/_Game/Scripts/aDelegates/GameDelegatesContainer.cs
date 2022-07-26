@@ -10,10 +10,10 @@ public static class GameDelegatesContainer
     public static Action StartCameraTransitionTo;
 
     public static Action<LevelDescriptionSO> StartLevel;
-    public static Action CompleteLevel;
+    public static Action<RecipeQualityType> CompleteLevel;
     public static Action FailLevel;
 
-    public static Action<LevelDescriptionSO> EventLevelStarted;
+    public static Action EventLevelStarted;
     public static Action EventLevelCompleted;
     public static Action EventLevelFailed;
 

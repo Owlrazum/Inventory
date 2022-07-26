@@ -10,6 +10,9 @@ public static class CraftingDelegatesContainer
     public static Func<CursorLocationType> GetCursorLocationCraftWindow;
     public static Func<CursorLocationType> GetCursorLocationItemsWindow;
 
+    public static Func<UITile[]> GetCraftTiles;
+    public static Func<int> GetCraftTilesColumnCount;
+
     public static Action<UITile> EventTileUnderPointerCame;
     public static Action EventTileUnderPointerGone;
 
@@ -24,4 +27,7 @@ public static class CraftingDelegatesContainer
     public static Action<UIStack, Vector2Int, WindowType> PlaceStack;
 
     public static Action<UIStack> ReturnStack; // Free tiles in window, and then move it
+
+    public static Func<RecipeQualityType> EvaluateRecipeQuality;
+    public static Func<ItemSO> GetTargetItem;
 }

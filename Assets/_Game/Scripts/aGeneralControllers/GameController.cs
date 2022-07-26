@@ -2,7 +2,7 @@ using UnityEngine;
 
 public enum GameStateType
 {
-    MainMenu,
+    MainMenu
 }
 
 public class GameController : MonoBehaviour
@@ -26,6 +26,7 @@ public class GameController : MonoBehaviour
     {
         GameDelegatesContainer.GetGameState += GetGameState;
         CraftingDelegatesContainer.GetItemSO += GetItemSO;
+        CraftingDelegatesContainer.GetTargetItem += GetTargetItem;
 
         InputDelegatesContainer.StartGameCommand += OnStartGameCommand;
         InputDelegatesContainer.ExitToMainMenuCommand += OnExitToMainMenuCommand;
@@ -36,6 +37,7 @@ public class GameController : MonoBehaviour
     {
         GameDelegatesContainer.GetGameState -= GetGameState;
         CraftingDelegatesContainer.GetItemSO -= GetItemSO;
+        CraftingDelegatesContainer.GetTargetItem -= GetTargetItem;
 
         InputDelegatesContainer.StartGameCommand -= OnStartGameCommand;
         InputDelegatesContainer.ExitToMainMenuCommand -= OnExitToMainMenuCommand;
@@ -63,6 +65,11 @@ public class GameController : MonoBehaviour
         return _itemList.Data[itemID];
     }
 
+    private ItemSO GetTargetItem()
+    {
+        return _gameDesc.Levels[_currentLevel].TargetItem;
+    }
+
     private void OnStartGameCommand()
     {
         // ApplicationDelegatesContainer.EventBeforeFinishingLoadingScene();
@@ -72,6 +79,7 @@ public class GameController : MonoBehaviour
     private void OnStartGameLoadingSceneFinished()
     {
         GameDelegatesContainer.StartLevel(_gameDesc.Levels[_currentLevel]);
+        GameDelegatesContainer.EventLevelStarted();
     }
 
     private void OnExitToMainMenuCommand()
