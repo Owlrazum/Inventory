@@ -89,12 +89,10 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
 
     protected virtual void Subscribe()
     { 
-        CraftingDelegatesContainer.ReturnStackToItemsWindow += ReturnStackToPreviousPlace;
     }
 
     protected virtual void OnDestroy()
     { 
-        CraftingDelegatesContainer.ReturnStackToItemsWindow -= ReturnStackToPreviousPlace;
     }
 
     protected virtual void Start()
@@ -169,6 +167,7 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
             {
                 _cursorLocation = CursorLocationType.InsideWindow;
             }
+            
             if (_tileUnderPointer != null)
             {
                 CraftingDelegatesContainer.EventTileUnderPointerGone?.Invoke();
@@ -293,14 +292,16 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
         }
     }
 
-    public virtual void PlaceStack(UIStack stack, Vector2Int placeDelta, out UIStack pushedOutStack)
+    public virtual void PlaceStack(UIStack stack, Vector2Int tilePos)
     {
-        Assert.IsTrue(_tileUnderPointer == null);
-        pushedOutStack = null;
+        Assert.IsTrue(
+            tilePos.x >= 0 && tilePos.x < _gridResolution.x &&
+            tilePos.y >= 0 && tilePos.y < _gridResolution.y
+        );
 
-        stack.Data.TilePos = _tileUnderPointer.Pos + placeDelta;
+        stack.Data.TilePos = tilePos;
         UpdateStackAnchPos(stack);
-        AssignStackToTilesReferences(stack);
+        AddStackToTilesReferences(stack);
     }
 
     protected virtual void UpdateStackAnchPos(UIStack stack)
@@ -310,36 +311,18 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
         Vector2Int sizeInt = stack.ItemType.Size;
         Vector2 stackSize = new Vector2(_tileSizePixels * sizeInt.x, _tileSizePixels * sizeInt.y);
         stack.UpdateRect(anchPos, stackSize, _itemsParent);
-
-        // RectTransform startTile = _tiles[TileIndex(tilePos)].Rect;
-        // RectTransform endTile = _tiles[TileIndex(tilePos + sizeInt - Vector2Int.one)].Rect;
-        // Vector2 adjust = new Vector2(endTile.rect.width, -endTile.rect.height);
-
-        // Vector2 anchPos = (startTile.anchoredPosition + endTile.anchoredPosition + adjust) / 2;
     }
 
-    protected void AssignStackToTilesReferences(UIStack stack)
-    {
-        Vector2Int pos = stack.Data.TilePos;
-        for (int i = 0; i < stack.Size.x; i++)
+    protected virtual void AddStackToTilesReferences(UIStack stack)
+    { 
+        for (int y = stack.Pos.y; y < stack.Size.y; y++)
         {
-            for (int j = 0; j < stack.Size.y; j++)
-            {
-                _tiles[TileIndex(pos.x + i, pos.y + j)].PlacedStack = stack;
+            for (int x = stack.Pos.x; x < stack.Size.x; x++)
+            { 
+                _tiles[TileIndex(x, y)].PlacedStack = stack;
             }
         }
     }
-
-    private void ReturnStackToPreviousPlace(UIStack stack)
-    {
-        if (!_tilesInstanceIDs.Contains(stack.Data.TileInstanceID))
-        {
-            return;
-        }
-
-        stack.ReturnToItsPlace(_tiles[TileIndex(stack.Data.TilePos)].Rect.anchoredPosition);
-    }
-    
 
     protected int TileIndex(int x, int y)
     {

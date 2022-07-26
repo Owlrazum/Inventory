@@ -8,8 +8,8 @@ public class TileWindowsController : MonoBehaviour
     [SerializeField]
     private UIWindowItems _itemsWindow;
 
-
-    private UITilesWindow _currentActiveWindow;
+    [SerializeField]
+    private float _stackReturnLerpSpeed = 1;
 
     private void Awake()
     {
@@ -19,8 +19,11 @@ public class TileWindowsController : MonoBehaviour
         CraftingDelegatesContainer.GetCursorLocationCraftWindow += GetCursorLocationCraftWindow;
         CraftingDelegatesContainer.GetCursorLocationItemsWindow += GetCursorLocationItemsWindow;
         
+        CraftingDelegatesContainer.EventStackWasSelected += OnStackWasSelected;
+        CraftingDelegatesContainer.ReturnStack += ReturnStack;
 
-        CraftingDelegatesContainer.PlaceStackUnderPointer += OnStackPlacement;
+        CraftingDelegatesContainer.IsPlacementPosValidInCraftWindow += IsPlacementPosValidInCraftWindow;
+        CraftingDelegatesContainer.PlaceStack += PlaceStack;
     }
 
     private void OnDestroy()
@@ -31,14 +34,17 @@ public class TileWindowsController : MonoBehaviour
         CraftingDelegatesContainer.GetCursorLocationCraftWindow -= GetCursorLocationCraftWindow;
         CraftingDelegatesContainer.GetCursorLocationItemsWindow -= GetCursorLocationItemsWindow;
 
-        CraftingDelegatesContainer.PlaceStackUnderPointer -= OnStackPlacement;
+        CraftingDelegatesContainer.EventStackWasSelected -= OnStackWasSelected;
+        CraftingDelegatesContainer.ReturnStack -= ReturnStack;
+
+        CraftingDelegatesContainer.IsPlacementPosValidInCraftWindow -= IsPlacementPosValidInCraftWindow;
+        CraftingDelegatesContainer.PlaceStack -= PlaceStack;
     }
 
     private int GetTileSizeInCraftWindow()
     {
         return _craftWindow.TileSizePixels;
     }
-
     private int GetTileSizeInItemsWindow()
     {
         return _itemsWindow.TileSizePixels;
@@ -48,15 +54,40 @@ public class TileWindowsController : MonoBehaviour
     {
         return _craftWindow.CursorLocation;
     }
-
     private CursorLocationType GetCursorLocationItemsWindow()
     { 
         return _itemsWindow.CursorLocation;
     }
 
-    private void OnStackPlacement(UIStack toPlace, Vector2Int pos, out UIStack pushedOutStack)
+    private void OnStackWasSelected(UIStack uiStack)
     {
-        pushedOutStack = null;
+        if (uiStack.RestingWindow == WindowType.CraftWindow)
+        {
+            _craftWindow.RemoveStackFromTilesReferences(uiStack);
+        }
+    }
+
+    private void ReturnStack(UIStack stack)
+    {
+        Vector2 targetPos = _itemsWindow.GetItemToTilePos(stack.ItemType.ID);
+        stack.ReturnToPosInItemsWindow(targetPos, _stackReturnLerpSpeed);
+    }
+
+    private bool IsPlacementPosValidInCraftWindow(Vector2Int stackSize, Vector2Int tilePos)
+    {
+        return _craftWindow.IsStackInsideGridResolution(stackSize, tilePos);
+    }
+
+    private void PlaceStack(UIStack toPlace, Vector2Int tilePos, WindowType toPlaceInto)
+    {
+        if (toPlaceInto == WindowType.CraftWindow)
+        {
+            _craftWindow.PlaceStack(toPlace, tilePos);
+        }
+        else if (toPlaceInto == WindowType.ItemsWindow)
+        {
+            _itemsWindow.PlaceStack(toPlace, tilePos);
+        }
     }
 }
 

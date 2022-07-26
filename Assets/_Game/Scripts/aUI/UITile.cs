@@ -1,6 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum WindowType
+{ 
+    NoWindow,
+    CraftWindow,
+    ItemsWindow
+}
+
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
 public class UITile : MonoBehaviour
@@ -29,6 +36,13 @@ public class UITile : MonoBehaviour
     [SerializeField]
     private Sprite _defaultSprite;
 
+    [SerializeField]
+    private WindowType _restingWindow;
+    public WindowType RestingWindow
+    {
+        get { return _restingWindow; }
+    }
+
     private RectTransform _rect;
     public RectTransform Rect 
     {
@@ -55,7 +69,12 @@ public class UITile : MonoBehaviour
         _placedStack = null;
     }
 
-    public void HighLightState()
+    public void HighLightFreeState()
+    {
+        _image.sprite = _activeSprite;
+    }
+
+    public void HighlightFilledState()
     {
         _image.sprite = _activeSprite;
     }
@@ -74,4 +93,11 @@ public class UITile : MonoBehaviour
     { 
         _image.color = Color.white;
     }
+
+#if UNITY_EDITOR
+    public void AssignWindowTypeOnGeneration(WindowType windowTypeArg)
+    {
+        _restingWindow = windowTypeArg;
+    }
+#endif
 }

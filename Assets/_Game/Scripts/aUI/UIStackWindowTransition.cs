@@ -6,6 +6,7 @@ using UnityEngine;
 /// craftWindow and itemsWindow
 /// </summary>
 [RequireComponent(typeof(RectTransform))]
+[DefaultExecutionOrder(-1)]
 public class UIStackWindowTransition : MonoBehaviour
 {
     private int _craftWindowBorder;
@@ -63,44 +64,21 @@ public class UIStackWindowTransition : MonoBehaviour
         while (true)
         {
             yield return null;
+            
             Transform prevParent = _trackedStack.Rect.parent;
             _trackedStack.Rect.SetParent(_rect, true);
             int trackPos = (int)(_trackedStack.Rect.anchoredPosition.y + _trackedStack.Rect.rect.size.y / 2);
             _trackedStack.Rect.SetParent(prevParent, true);
             if (trackPos < 0)
             {
-                if (CraftingDelegatesContainer.GetCursorLocationItemsWindow() == CursorLocationType.InsideWindow ||
-                    CraftingDelegatesContainer.GetCursorLocationCraftWindow() == CursorLocationType.OnTile)
-                { 
-                    _trackedStack.WindowState = WindowTransitionState.ItemsWindow;
-                    print("Inside items window");
-                }
-                else
-                { 
-                    _trackedStack.WindowState = WindowTransitionState.Transition;
-                }
-
                 _trackedStack.ChangeSizeDuringTransition(_itemsWindowStackSize);
                 continue;
             }
             else if (trackPos > _borderRange)
             {
-                if (CraftingDelegatesContainer.GetCursorLocationCraftWindow() == CursorLocationType.InsideWindow ||
-                    CraftingDelegatesContainer.GetCursorLocationCraftWindow() == CursorLocationType.OnTile)
-                { 
-                    _trackedStack.WindowState = WindowTransitionState.CraftWindow;
-                    print("Inside craft window");
-                }
-                else
-                { 
-                    _trackedStack.WindowState = WindowTransitionState.Transition;
-                }
-
                 _trackedStack.ChangeSizeDuringTransition(_craftWindowStackSize);
                 continue;
             }
-
-            _trackedStack.WindowState = WindowTransitionState.Transition;
 
             float lerpParam = trackPos * 1.0f / _borderRange;
             Vector2 sizeFloat = Vector2.Lerp(_itemsWindowStackSize, _craftWindowStackSize, lerpParam);

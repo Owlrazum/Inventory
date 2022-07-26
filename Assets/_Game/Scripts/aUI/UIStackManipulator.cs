@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 using Orazum.UI;
 
@@ -69,30 +70,35 @@ public class UIStackManipulator : MonoBehaviour
             return;
         }
 
-        _isCurrentPlacementPosValid = CraftingDelegatesContainer.IsCurrentPlacementPosValid(
-            _selectedStack, 
-            _stackSelectionLocalPos, 
-            _tileUnderPointer.Pos
-        );
-
-        if (!_isCurrentPlacementPosValid || _selectedStack.WindowState != WindowTransitionState.CraftWindow)
+        switch (_tileUnderPointer.RestingWindow)
         {
-            return;
-        }
+            case WindowType.ItemsWindow:
+                _isCurrentPlacementPosValid = true;
+                break;
+            case WindowType.CraftWindow:
+                _isCurrentPlacementPosValid = CraftingDelegatesContainer.IsPlacementPosValidInCraftWindow(
+                    _selectedStack.Size,
+                    _tileUnderPointer.Pos - _stackSelectionLocalPos
+                );
 
-        CraftingDelegatesContainer.HighlightTilesUnderSelectedStack?
-            .Invoke(_selectedStack, _tileUnderPointer.Pos - _stackSelectionLocalPos);
+                if (_isCurrentPlacementPosValid)
+                {
+                    CraftingDelegatesContainer.HighlightTilesInCraftWindow(
+                        _selectedStack,
+                        _tileUnderPointer.Pos - _stackSelectionLocalPos
+                    );
+                }
+                break;
+        }
     }
 
     private void OnTileUnderPointerGone()
     {
         _tileUnderPointer.UndoDebugColor();
 
-        if (_selectedStack != null)
+        if (_selectedStack != null && _tileUnderPointer.RestingWindow == WindowType.CraftWindow)
         {
-            print("Default tiles");
-            CraftingDelegatesContainer.DefaultLastTilesUnderSelectedStack?
-                .Invoke(_selectedStack, _tileUnderPointer.Pos - _stackSelectionLocalPos);   
+            CraftingDelegatesContainer.DefaultLastHighlightInCraftWindow?.Invoke();   
         }
         
         _isCurrentPlacementPosValid = false;
@@ -103,35 +109,38 @@ public class UIStackManipulator : MonoBehaviour
     private void OnSelectStackCommand(UIStack stack, Vector2Int stackSelectionLocalPosArg)
     {
         _stackSelectionLocalPos = stackSelectionLocalPosArg;
+        _selectedStack = SelectStack(stack);
 
-        if (stack.Data.ItemAmount > 1)
-        {
-            _selectedStack = PoolingDelegatesContainer.SpawnStack();
-            UIStackData stackData = UIStackData.TakeOne(stack.Data);
-            _selectedStack.InitializeWithData(stackData, stack.BoundingRect);
-            _selectedStack.Rect.anchoredPosition = stack.Rect.anchoredPosition;
-            _selectedStack.Rect.sizeDelta = stack.Rect.sizeDelta;
-        }
-        else
-        { 
-            _selectedStack = stack;
-        }
-        
         CraftingDelegatesContainer.EventStackWasSelected?.Invoke(_selectedStack);
 
-        _isCurrentPlacementPosValid = CraftingDelegatesContainer.IsCurrentPlacementPosValid(
-            _selectedStack, 
-            _stackSelectionLocalPos,
-            _tileUnderPointer.Pos
-        );
+        _isCurrentPlacementPosValid = true;
 
-        if (_selectedStack.WindowState == WindowTransitionState.CraftWindow)
-        { 
-            CraftingDelegatesContainer.HighlightTilesUnderSelectedStack?.Invoke(_selectedStack, _tileUnderPointer.Pos);
+        if (_tileUnderPointer.RestingWindow == WindowType.CraftWindow)
+        {
+            CraftingDelegatesContainer.HighlightTilesInCraftWindow?.Invoke(_selectedStack, _tileUnderPointer.Pos);
         }
 
         _stackFollowSequence = StackFollowSequence();
         StartCoroutine(_stackFollowSequence);
+    }
+
+    private UIStack SelectStack(UIStack stack)
+    {
+        UIStack toReturn;
+        if (stack.Data.ItemAmount > 1)
+        {
+            toReturn = PoolingDelegatesContainer.SpawnStack();
+            UIStackData stackData = UIStackData.TakeOne(stack.Data);
+            toReturn.InitializeWithData(stackData, stack.BoundingRect);
+            toReturn.Rect.anchoredPosition = stack.Rect.anchoredPosition;
+            toReturn.Rect.sizeDelta = stack.Rect.sizeDelta;
+        }
+        else
+        { 
+            toReturn = stack;
+        }
+
+        return toReturn;
     }
 
     private IEnumerator StackFollowSequence()
@@ -148,30 +157,22 @@ public class UIStackManipulator : MonoBehaviour
             {
                 if (_isCurrentPlacementPosValid)
                 {
-                    UIStack pushedOutStack = null;
-                    CraftingDelegatesContainer.PlaceStackUnderPointer?.Invoke(
+                    CraftingDelegatesContainer.PlaceStack(
                         _selectedStack, 
-                        _stackSelectionLocalPos, 
-                        out pushedOutStack
+                        _tileUnderPointer.Pos - _stackSelectionLocalPos,
+                        _tileUnderPointer.RestingWindow
                     );
-
-                    if (pushedOutStack == null)
-                    {
-                        _selectedStack = null;
-                        _pointerEventsUpdater.UnregisterMovingUI();
-                        _stackFollowSequence = null;
-                        yield break;
-                    }
-
-                    CheckPushedOutStackSelection();
-
-                    _prevPos = Input.mousePosition;
-                    _prevPos -= _pickUpDelta;
                 }
                 else
-                { 
-                    CraftingDelegatesContainer.ReturnStackToItemsWindow(_selectedStack);
+                {
+                    CraftingDelegatesContainer.ReturnStack(_selectedStack);
                 }
+
+                _selectedStack = null;
+                _pointerEventsUpdater.UnregisterMovingUI();
+                _stackFollowSequence = null;
+
+                yield break;
             }
 
             Vector2 newPos = Input.mousePosition;
@@ -181,20 +182,6 @@ public class UIStackManipulator : MonoBehaviour
             yield return null;
         }
 #endif
-    }
-
-    // _selectedStack is already initialized by pushedOut
-    private void CheckPushedOutStackSelection()
-    {
-        if (_selectedStack == null)
-        {
-            return;
-        }
-        _isCurrentPlacementPosValid = CraftingDelegatesContainer.IsCurrentPlacementPosValid(
-            _selectedStack,
-            _stackSelectionLocalPos,
-            _tileUnderPointer.Pos
-        );
     }
 }
 

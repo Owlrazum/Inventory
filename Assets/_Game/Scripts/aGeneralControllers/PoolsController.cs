@@ -30,11 +30,6 @@ public class PoolsController : MonoBehaviour
         PoolingDelegatesContainer.DespawnStack -= Despawn;
     }
 
-    private UIStack Create()
-    {
-        return Instantiate(_prefab);
-    }
-
     private UIStack Spawn()
     {
         return _pool.Get();
@@ -42,6 +37,12 @@ public class PoolsController : MonoBehaviour
 
     private void Despawn(UIStack bs)
     {
+        bs.gameObject.SetActive(false);
         _pool.Release(bs);
+    }
+    
+    private UIStack Create()
+    {
+        return Instantiate(_prefab);
     }
 }

@@ -100,6 +100,7 @@ public class UIWindowItemsGenerator : EditorWindow
                 }
 
                 // tile.Rect = rect;
+                tile.AssignWindowTypeOnGeneration(WindowType.ItemsWindow);
                 generatedTiles[column, row] = tile;
                 tile.GenerationInitialize(new Vector2Int(column, row));
 

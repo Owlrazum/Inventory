@@ -8,7 +8,7 @@ using TMPro;
 
 using Orazum.UI;
 
-public enum WindowTransitionState
+public enum WindowTransitionStateType
 {
     ItemsWindow,
     Transition,
@@ -70,7 +70,7 @@ public class UIStackData
 
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
-public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHandler
+public class UIStack : MonoBehaviour, IPointerTouchHandler
 {
     public UIStackData Data { get; private set; }
     public RectTransform BoundingRect { get; private set; }
@@ -91,7 +91,23 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
         }
     }
 
-    public WindowTransitionState WindowState 
+    public Vector2Int Pos
+    {
+        get
+        {
+            return Data.TilePos;
+        }
+    }
+
+    public int ItemAmount
+    {
+        get
+        {
+            return Data.ItemAmount;
+        }
+    }
+
+    public WindowType RestingWindow
     { 
         get; 
         set; 
@@ -187,7 +203,6 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
     private void Start()
     {
         var uiEventsUpdater = UIDelegatesContainer.GetEventsUpdater();
-        uiEventsUpdater.AddPointerEnterExitHandler(this);
         uiEventsUpdater.AddPointerTouchHandler(this);
     }
 
@@ -199,14 +214,24 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
         }
     }
 
-    public void ReturnToItsPlace(Vector2 anchPos)
+    public void ReturnToPosInItemsWindow(Vector2 targetPos, float lerpSpeed)
     {
-        StartCoroutine(ReturnalSequence(anchPos));
+        RestingWindow = WindowType.NoWindow;
+        StartCoroutine(ReturnalToItemsWindowSequence(targetPos, lerpSpeed));
     }
 
-    private IEnumerator ReturnalSequence(Vector2 anchPos)
+    private IEnumerator ReturnalToItemsWindowSequence(Vector2 targetPos, float lerpSpeed)
     {
-        yield return null;
+        float lerpParam = 0;
+        Vector2 initialPos = _rect.anchoredPosition;
+        while (lerpParam < 1)
+        {
+            lerpParam += lerpSpeed * Time.deltaTime;
+            _rect.anchoredPosition = Vector2.Lerp(initialPos, targetPos, lerpParam);
+            yield return null;
+        }
+
+        RestingWindow = WindowType.ItemsWindow;
     }
 
     public void OnPointerTouch()
@@ -216,11 +241,11 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
             return;
         }
 
-        if (WindowState == WindowTransitionState.ItemsWindow)
+        if (RestingWindow == WindowType.ItemsWindow)
         {
             InputDelegatesContainer.SelectStackCommand?.Invoke(this, Vector2Int.zero);
         }
-        else
+        else if (RestingWindow == WindowType.CraftWindow)
         {
             Vector2Int localPoint = UIDelegatesContainer.GetEventsUpdater().GetLocalPoint(Rect, out bool isValid);
             // it returns as a negative with current sceen setup;
@@ -234,26 +259,7 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
             int tileSize = CraftingDelegatesContainer.GetTileSizeInCraftWindow();
             int col = localPoint.x / tileSize;
             int row = localPoint.y / tileSize;
-            print(localPoint + " " + col + " " + row);
         }
-    }
-
-    public void OnPointerEnter()
-    {
-        if (CraftingDelegatesContainer.IsStackSelected())
-        {
-            return;
-        }
-        CraftingDelegatesContainer.HighlightPlacedStack?.Invoke(this);
-    }
-
-    public void OnPointerExit()
-    { 
-        if (CraftingDelegatesContainer.IsStackSelected())
-        {
-            return;
-        }
-        CraftingDelegatesContainer.DefaultPlacedStack?.Invoke(this);
     }
 
     public void ChangeSizeDuringTransition(Vector2 newSize)
@@ -261,7 +267,6 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHan
         _rect.sizeDelta = newSize;
     }
 }
-
 
 // rect.anchorMin = new Vector2(0, 1);
 // rect.anchorMax = new Vector2(0, 1);

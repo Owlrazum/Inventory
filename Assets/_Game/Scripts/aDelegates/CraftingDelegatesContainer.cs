@@ -16,19 +16,11 @@ public static class CraftingDelegatesContainer
     public static Action<UIStack> EventStackWasSelected;
     public static Func<bool> IsStackSelected;
 
-    public static Action<UIStack> HighlightPlacedStack;
-    public static Action<UIStack> DefaultPlacedStack;
-    public static Action<UIStack, Vector2Int> HighlightTilesUnderSelectedStack;
-    public static Action<UIStack, Vector2Int> DefaultLastTilesUnderSelectedStack;
+    public static Action<UIStack, Vector2Int> HighlightTilesInCraftWindow; // red
+    public static Action DefaultLastHighlightInCraftWindow;
 
-    public static Func<UIStack, Vector2Int, Vector2Int, bool> IsCurrentPlacementPosValid;
+    public static Func<Vector2Int, Vector2Int, bool> IsPlacementPosValidInCraftWindow;
+    public static Action<UIStack, Vector2Int, WindowType> PlaceStack;
 
-    public delegate void PlacementDelegate(
-        UIStack toPlace, 
-        Vector2Int stackSelectionLocalPos, 
-        out UIStack pushedOutStack
-    );
-    public static PlacementDelegate PlaceStackUnderPointer;
-
-    public static Action<UIStack> ReturnStackToItemsWindow; // no impl
+    public static Action<UIStack> ReturnStack; // Free tiles in window, and then move it
 }
