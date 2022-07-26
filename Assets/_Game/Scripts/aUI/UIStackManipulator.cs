@@ -94,7 +94,11 @@ public class UIStackManipulator : MonoBehaviour
 
     private void OnTileUnderPointerGone()
     {
-        _tileUnderPointer.UndoDebugColor();
+        if (_tileUnderPointer != null)
+        { 
+            // Perhaps the bug is here
+            _tileUnderPointer.UndoDebugColor();
+        }
 
         if (_selectedStack != null && _tileUnderPointer.RestingWindow == WindowType.CraftWindow)
         {
@@ -142,7 +146,10 @@ public class UIStackManipulator : MonoBehaviour
         else
         { 
             toReturn = stack;
-            CraftingDelegatesContainer.EventLastStackWithItemIDWasTaken(toReturn.ItemType.ID);
+            if (_tileUnderPointer.RestingWindow == WindowType.ItemsWindow)
+            { 
+                CraftingDelegatesContainer.EventLastStackIDWasTakenFromItemsWindow(toReturn);
+            }
         }
 
         return toReturn;

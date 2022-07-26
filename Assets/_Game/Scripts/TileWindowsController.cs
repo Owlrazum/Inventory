@@ -70,8 +70,18 @@ public class TileWindowsController : MonoBehaviour
 
     private void ReturnStack(UIStack stack)
     {
-        Vector2 targetPos = _itemsWindow.GetItemToTilePos(stack.ItemType.ID);
-        stack.ReturnToPosInItemsWindow(targetPos, _stackReturnLerpSpeed);
+        Vector2 targetPos = _itemsWindow.GetItemToTileLocalAnchPos(stack.ItemType.ID);
+        stack.Rect.SetParent(_itemsWindow.Rect, true);
+        Vector2 targetSize = Vector2.one * GetTileSizeInItemsWindow();
+        stack.ReturnToPosInItemsWindow(targetPos, targetSize, _stackReturnLerpSpeed, OnReturningComplete);
+    }
+
+    private void OnReturningComplete(UIStack uiStack)
+    {
+        print("OnLerpCompletet"); // LastPoint
+        Vector2Int tilePos = _itemsWindow.GetItemToTilePos(uiStack.ItemType.ID);
+        print(tilePos);
+        _itemsWindow.PlaceStack(uiStack, tilePos);
     }
 
     private bool IsPlacementPosValidInCraftWindow(Vector2Int stackSize, Vector2Int tilePos)

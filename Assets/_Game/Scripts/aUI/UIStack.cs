@@ -214,24 +214,27 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler
         }
     }
 
-    public void ReturnToPosInItemsWindow(Vector2 targetPos, float lerpSpeed)
+    public void ReturnToPosInItemsWindow(Vector2 targetPos, Vector2 targetSize, float lerpSpeed, Action<UIStack> OnLerpComplete)
     {
         RestingWindow = WindowType.NoWindow;
-        StartCoroutine(ReturnalToItemsWindowSequence(targetPos, lerpSpeed));
+        StartCoroutine(ReturnalToItemsWindowSequence(targetPos, targetSize, lerpSpeed, OnLerpComplete));
     }
 
-    private IEnumerator ReturnalToItemsWindowSequence(Vector2 targetPos, float lerpSpeed)
+    private IEnumerator ReturnalToItemsWindowSequence(Vector2 targetPos, Vector2 targetSize, float lerpSpeed, Action<UIStack> OnLerpComplete)
     {
         float lerpParam = 0;
         Vector2 initialPos = _rect.anchoredPosition;
+        Vector2 initialSize = _rect.sizeDelta;
         while (lerpParam < 1)
         {
             lerpParam += lerpSpeed * Time.deltaTime;
             _rect.anchoredPosition = Vector2.Lerp(initialPos, targetPos, lerpParam);
+            _rect.sizeDelta = Vector2.Lerp(initialSize, targetSize, lerpParam);
             yield return null;
         }
 
         RestingWindow = WindowType.ItemsWindow;
+        OnLerpComplete(this);
         // TODO Place stack in itemsWindow.
     }
 

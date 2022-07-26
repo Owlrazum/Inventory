@@ -17,15 +17,16 @@ public class UIWindowItems : UITilesWindow
 
         GameDelegatesContainer.StartLevel += OnPrepareLevel;
 
-        CraftingDelegatesContainer.EventLastStackWithItemIDWasTaken += OnLastStackWasTaken;
+        CraftingDelegatesContainer.EventLastStackIDWasTakenFromItemsWindow += OnLastStackWasTaken;
     }
 
     protected override void OnDestroy()
     {
         base.OnDestroy();
+
         GameDelegatesContainer.StartLevel -= OnPrepareLevel;
 
-        CraftingDelegatesContainer.EventLastStackWithItemIDWasTaken -= OnLastStackWasTaken;
+        CraftingDelegatesContainer.EventLastStackIDWasTakenFromItemsWindow -= OnLastStackWasTaken;
     }
 
     private void OnPrepareLevel(LevelDescriptionSO levelDescription)
@@ -47,20 +48,34 @@ public class UIWindowItems : UITilesWindow
             UpdateStackAnchPos(uiStack);
             
             uiStack.RestingWindow = WindowType.ItemsWindow;
+            uiStack.Rect.SetParent(Rect, true);
 
             _tiles[TileIndex(stackData.TilePos)].PlacedStack = uiStack;
             _itemsTilesRelation.Add(itemType.ID, tileIndex);
         }
     }
 
-    private void OnLastStackWasTaken(int itemID)
+    private void OnLastStackWasTaken(UIStack uiStack)
     {
+        print("Last stack was taken");
+        int itemID = uiStack.ItemType.ID;
         _tiles[_itemsTilesRelation[itemID]].PlacedStack = null;
     }
 
-    public Vector2 GetItemToTilePos(int itemID)
-    { 
-        return _tiles[_itemsTilesRelation[itemID]].Rect.anchoredPosition;
+    public Vector2 GetItemToTileLocalAnchPos(int itemID)
+    {
+        // Transform t = _tiles[_itemsTilesRelation[itemID]].Rect;
+        Vector3 anchPos = _tiles[_itemsTilesRelation[itemID]].Rect.anchoredPosition;
+        // Vector3 worldPos = t.TransformPoint(anchPos);
+        // Vector3 toReturn = _tiles[_itemsTilesRelation[itemID]].Rect.parent.InverseTransformPoint(worldPos);
+        // print("LocalPositionInParent " + toReturn);
+        return anchPos;
+    }
+
+    public Vector2Int GetItemToTilePos(int itemID)
+    {
+        int index = _itemsTilesRelation[itemID];
+        return TileIndex(index);
     }
 
     public override void PlaceStack(UIStack stack, Vector2Int tilePos2D)
@@ -73,11 +88,13 @@ public class UIWindowItems : UITilesWindow
         int tilePos = TileIndex(tilePos2D);
         Assert.IsTrue(_itemsTilesRelation[stack.ItemType.ID] == tilePos);
         if (_tiles[tilePos].PlacedStack == null)
-        { 
+        {
+            print("placed stack is null");
             base.PlaceStack(stack, tilePos2D);
         }
         else
         {
+            print("jsjs");
             _tiles[tilePos].PlacedStack.Data.ItemAmount++;
             PoolingDelegatesContainer.DespawnStack(stack);
         }

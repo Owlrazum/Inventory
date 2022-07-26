@@ -887,7 +887,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _craftWindow: {fileID: 1450932438}
   _itemsWindow: {fileID: 751828811}
-  _stackReturnLerpSpeed: 1
+  _stackReturnLerpSpeed: 4
 --- !u!1 &751828809
 GameObject:
   m_ObjectHideFlags: 0

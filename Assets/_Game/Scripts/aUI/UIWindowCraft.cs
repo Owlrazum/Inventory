@@ -20,6 +20,8 @@ public class UIWindowCraft : UITilesWindow
 
         CraftingDelegatesContainer.HighlightTilesInCraftWindow += HighlightTiles;
         CraftingDelegatesContainer.DefaultLastHighlightInCraftWindow += DefaultLastHighlightedTiles;
+
+        CraftingDelegatesContainer.EventLastStackIDWasTakenFromItemsWindow += OnLastStackWithItemIDWasTaken;
     }
 
     protected override void OnDestroy()
@@ -28,6 +30,8 @@ public class UIWindowCraft : UITilesWindow
 
         CraftingDelegatesContainer.HighlightTilesInCraftWindow -= HighlightTiles;
         CraftingDelegatesContainer.DefaultLastHighlightInCraftWindow -= DefaultLastHighlightedTiles;
+
+        CraftingDelegatesContainer.EventLastStackIDWasTakenFromItemsWindow -= OnLastStackWithItemIDWasTaken;
     }
 
     public override void PlaceStack(UIStack uiStack, Vector2Int tilePos)
@@ -50,6 +54,8 @@ public class UIWindowCraft : UITilesWindow
         uiStack.RestingWindow = WindowType.CraftWindow;
         AddStackToTilesReferences(uiStack);
         UpdateStackAnchPos(uiStack);
+
+        CraftingDelegatesContainer.DefaultLastHighlightInCraftWindow();
     }
 
     public void RemoveStackFromTilesReferences(UIStack stack)
@@ -125,5 +131,10 @@ public class UIWindowCraft : UITilesWindow
         {
             _tiles[highlightedTileIndex].DefaultState();
         }
+    }
+
+    private void OnLastStackWithItemIDWasTaken(UIStack lastStack)
+    {
+        lastStack.Rect.SetParent(_window, true);
     }
 }

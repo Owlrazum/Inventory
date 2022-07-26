@@ -43,6 +43,10 @@ public class UIButton : MonoBehaviour, IPointerTouchHandler, IPointerEnterExitHa
 
     private void OnDestroy()
     {
+        if (UIDelegatesContainer.GetEventsUpdater == null)
+        {
+            return;
+        }
         var uiUpdater = UIDelegatesContainer.GetEventsUpdater();
         if (uiUpdater != null)
         { 

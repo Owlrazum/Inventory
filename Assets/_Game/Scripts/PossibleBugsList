@@ -1,1 +1,1 @@
-TileUnderPointer was null while testing selectionLocalPoint.
+TileUnderPointer is null inside UIStackManimulator on gone.

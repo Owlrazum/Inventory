@@ -334,6 +334,11 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
         return xy.y * _gridResolution.x + xy.x;
     }
 
+    protected Vector2Int TileIndex(int index)
+    {
+        return new Vector2Int(index % _gridResolution.x, index / _gridResolution.x);
+    }
+
     #region Editor
 #if UNITY_EDITOR
     public void AssignTiles(
