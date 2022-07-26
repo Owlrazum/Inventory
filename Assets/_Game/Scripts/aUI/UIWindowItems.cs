@@ -16,12 +16,16 @@ public class UIWindowItems : UITilesWindow
         _itemsTilesRelation = new Dictionary<int, int>(5);
 
         GameDelegatesContainer.StartLevel += OnPrepareLevel;
+
+        CraftingDelegatesContainer.EventLastStackWithItemIDWasTaken += OnLastStackWasTaken;
     }
 
     protected override void OnDestroy()
     {
         base.OnDestroy();
         GameDelegatesContainer.StartLevel -= OnPrepareLevel;
+
+        CraftingDelegatesContainer.EventLastStackWithItemIDWasTaken -= OnLastStackWasTaken;
     }
 
     private void OnPrepareLevel(LevelDescriptionSO levelDescription)
@@ -47,6 +51,11 @@ public class UIWindowItems : UITilesWindow
             _tiles[TileIndex(stackData.TilePos)].PlacedStack = uiStack;
             _itemsTilesRelation.Add(itemType.ID, tileIndex);
         }
+    }
+
+    private void OnLastStackWasTaken(int itemID)
+    {
+        _tiles[_itemsTilesRelation[itemID]].PlacedStack = null;
     }
 
     public Vector2 GetItemToTilePos(int itemID)

@@ -232,6 +232,7 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler
         }
 
         RestingWindow = WindowType.ItemsWindow;
+        // TODO Place stack in itemsWindow.
     }
 
     public void OnPointerTouch()
@@ -259,6 +260,8 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler
             int tileSize = CraftingDelegatesContainer.GetTileSizeInCraftWindow();
             int col = localPoint.x / tileSize;
             int row = localPoint.y / tileSize;
+
+            InputDelegatesContainer.SelectStackCommand?.Invoke(this, new Vector2Int(col, row));
         }
     }
 

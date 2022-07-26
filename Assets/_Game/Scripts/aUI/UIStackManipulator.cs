@@ -112,12 +112,16 @@ public class UIStackManipulator : MonoBehaviour
         _selectedStack = SelectStack(stack);
 
         CraftingDelegatesContainer.EventStackWasSelected?.Invoke(_selectedStack);
+        _selectedStack.RestingWindow = WindowType.NoWindow; // Others need info on RestingWindow
 
         _isCurrentPlacementPosValid = true;
 
         if (_tileUnderPointer.RestingWindow == WindowType.CraftWindow)
         {
-            CraftingDelegatesContainer.HighlightTilesInCraftWindow?.Invoke(_selectedStack, _tileUnderPointer.Pos);
+            CraftingDelegatesContainer.HighlightTilesInCraftWindow(
+                _selectedStack, 
+                _tileUnderPointer.Pos - _stackSelectionLocalPos
+            );
         }
 
         _stackFollowSequence = StackFollowSequence();
@@ -138,6 +142,7 @@ public class UIStackManipulator : MonoBehaviour
         else
         { 
             toReturn = stack;
+            CraftingDelegatesContainer.EventLastStackWithItemIDWasTaken(toReturn.ItemType.ID);
         }
 
         return toReturn;

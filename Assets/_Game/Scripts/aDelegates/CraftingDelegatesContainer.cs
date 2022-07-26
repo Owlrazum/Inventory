@@ -15,6 +15,7 @@ public static class CraftingDelegatesContainer
 
     public static Action<UIStack> EventStackWasSelected;
     public static Func<bool> IsStackSelected;
+    public static Action<int> EventLastStackWithItemIDWasTaken;
 
     public static Action<UIStack, Vector2Int> HighlightTilesInCraftWindow; // red
     public static Action DefaultLastHighlightInCraftWindow;

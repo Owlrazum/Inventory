@@ -315,9 +315,9 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
 
     protected virtual void AddStackToTilesReferences(UIStack stack)
     { 
-        for (int y = stack.Pos.y; y < stack.Size.y; y++)
+        for (int y = stack.Pos.y; y < stack.Size.y + stack.Pos.y; y++)
         {
-            for (int x = stack.Pos.x; x < stack.Size.x; x++)
+            for (int x = stack.Pos.x; x < stack.Size.x + stack.Pos.x; x++)
             { 
                 _tiles[TileIndex(x, y)].PlacedStack = stack;
             }

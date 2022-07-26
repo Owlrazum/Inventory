@@ -63,6 +63,7 @@ public class TileWindowsController : MonoBehaviour
     {
         if (uiStack.RestingWindow == WindowType.CraftWindow)
         {
+            print("Removing");
             _craftWindow.RemoveStackFromTilesReferences(uiStack);
         }
     }

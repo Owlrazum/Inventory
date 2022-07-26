@@ -1,15 +1,17 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class UIWindowCraft : UITilesWindow
 {
-    private int[] _highlightedTilesIndices;
-    private int _highlightCount;
+    private HashSet<int> _highlightedTilesIndices;
+    private HashSet<int> _highlightedStacks;
 
     protected override void Awake()
     {
         base.Awake();
 
-        _highlightedTilesIndices = new int[_gridResolution.x * _gridResolution.y];
+        _highlightedTilesIndices = new HashSet<int>(_gridResolution.x * _gridResolution.y);
+        _highlightedStacks = new HashSet<int>(10);
     }
 
     protected override void Subscribe()
@@ -30,12 +32,11 @@ public class UIWindowCraft : UITilesWindow
 
     public override void PlaceStack(UIStack uiStack, Vector2Int tilePos)
     {
-        for (int y = 0; y < uiStack.Size.y; y++)
+        for (int y = tilePos.y; y < uiStack.Size.y + tilePos.y; y++)
         {
-            for (int x = 0; x < uiStack.Size.x; x++)
+            for (int x = tilePos.x; x < uiStack.Size.x + tilePos.x; x++)
             {
-                Vector2Int delta = new Vector2Int(x, y);
-                int tileIndex = TileIndex(tilePos + delta);
+                int tileIndex = TileIndex(x, y);
                 UIStack prevPlacedStack = _tiles[tileIndex].PlacedStack;
                 if (prevPlacedStack != null)
                 {
@@ -46,15 +47,16 @@ public class UIWindowCraft : UITilesWindow
         }
 
         uiStack.Data.TilePos = tilePos;
+        uiStack.RestingWindow = WindowType.CraftWindow;
         AddStackToTilesReferences(uiStack);
         UpdateStackAnchPos(uiStack);
     }
 
     public void RemoveStackFromTilesReferences(UIStack stack)
     {
-        for (int y = stack.Pos.y; y < stack.Size.y; y++)
+        for (int y = stack.Pos.y; y < stack.Size.y + stack.Pos.y; y++)
         {
-            for (int x = stack.Pos.x; x < stack.Size.x; x++)
+            for (int x = stack.Pos.x; x < stack.Size.x + stack.Pos.x; x++)
             { 
                 _tiles[TileIndex(x, y)].PlacedStack = null;
             }
@@ -63,8 +65,12 @@ public class UIWindowCraft : UITilesWindow
 
     public bool IsStackInsideGridResolution(Vector2Int stackSize, Vector2Int tilePos)
     {
-        if (tilePos.y + stackSize.y > _gridResolution.y ||
-            tilePos.x + stackSize.x > _gridResolution.x)
+        if (tilePos.y < 0 || tilePos.x < 0)
+        {
+            return false;
+        }
+        if (tilePos.y + stackSize.y >= _gridResolution.y ||
+            tilePos.x + stackSize.x >= _gridResolution.x)
         {
             return false;
         }
@@ -74,25 +80,32 @@ public class UIWindowCraft : UITilesWindow
 
     public void HighlightTiles(UIStack uiStack, Vector2Int tilePos)
     {
-        _highlightCount = 0;
-        for (int y = 0; y < uiStack.Size.y; y++)
+        _highlightedTilesIndices.Clear();
+        _highlightedStacks.Clear();
+
+        for (int y = tilePos.y; y < uiStack.Size.y + tilePos.y; y++)
         {
-            for (int x = 0; x < uiStack.Size.x; x++)
+            for (int x = tilePos.x; x < uiStack.Size.x + tilePos.x; x++)
             {
-                Vector2Int delta = new Vector2Int(x, y);
-                int hightlightIndex = TileIndex(tilePos + delta);
+                int hightlightIndex = TileIndex(x, y);
                 if (_tiles[hightlightIndex].PlacedStack != null)
                 {
                     UIStack toHighlight = _tiles[hightlightIndex].PlacedStack;
-                    for (int y2 = 0; y2 < toHighlight.Size.y; y2++)
+                    if (!_highlightedStacks.Contains(toHighlight.InstanceID))
                     {
-                        for (int x2 = 0; x2 < toHighlight.Size.x; x2++)
+                        _highlightedStacks.Add(toHighlight.InstanceID);
+
+                        for (int y2 = toHighlight.Pos.y; y2 < toHighlight.Size.y + toHighlight.Pos.y; y2++)
                         {
-                            Vector2Int delta2 = new Vector2Int(x2, y2);
-                            int hightlightIndex2 = TileIndex(toHighlight.Pos + delta2);
-                            _highlightedTilesIndices[_highlightCount] = hightlightIndex2;
-                            _highlightCount++;
-                            _tiles[hightlightIndex2].HighlightFilledState();
+                            for (int x2 = toHighlight.Pos.x; x2 < toHighlight.Size.x + toHighlight.Pos.x; x2++)
+                            {
+                                int hightlightIndex2 = TileIndex(x2, y2);
+                                if (!_highlightedTilesIndices.Contains(hightlightIndex2))
+                                { 
+                                    _highlightedTilesIndices.Add(hightlightIndex2);
+                                }
+                                _tiles[hightlightIndex2].HighlightFilledState();
+                            }
                         }
                     }
                 }
@@ -100,17 +113,17 @@ public class UIWindowCraft : UITilesWindow
                 { 
                     _tiles[hightlightIndex].HighLightFreeState();
                 }
-                _highlightedTilesIndices[_highlightCount] = hightlightIndex;
-                _highlightCount++;
+
+                _highlightedTilesIndices.Add(hightlightIndex);
             }
         }
     }
 
     public void DefaultLastHighlightedTiles()
     {
-        for (int h = 0; h < _highlightCount; h++)
+        foreach (int highlightedTileIndex in _highlightedTilesIndices)
         {
-            _tiles[_highlightedTilesIndices[h]].DefaultState();
+            _tiles[highlightedTileIndex].DefaultState();
         }
     }
 }
