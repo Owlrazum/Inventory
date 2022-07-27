@@ -22,7 +22,7 @@ public class ItemSO : ScriptableObject
 
     // public string RecipeRequirements
     [Help("Imagine a box with certain size, the top left corner has position (0, 0), " +
-          "\nbottomLeft has (0, boxSize), \ntopRight (boxSize,  0), \nbottomRight(boxSize, boxSize)", UnityEditor.MessageType.Info)]
+          "\nbottomLeft has (0, boxSize), \ntopRight (boxSize,  0), \nbottomRight(boxSize, boxSize)")]
     [SerializeField]
     private bool _justToShowHelpBox;
 
