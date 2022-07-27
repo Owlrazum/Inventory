@@ -8,4 +8,7 @@ public static class InputDelegatesContainer
     public static Action ExitGameCommand;
 
     public static Action<UIStack, Vector2Int> SelectStackCommand;
+
+    public static Action RetryLevelCommand;
+    public static Action NextLevelCommand;
 }

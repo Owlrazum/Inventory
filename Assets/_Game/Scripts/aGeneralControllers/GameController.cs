@@ -2,7 +2,10 @@ using UnityEngine;
 
 public enum GameStateType
 {
-    MainMenu
+    MainMenu,
+    Crafting,
+    DrumRoll,
+    LevelComplete
 }
 
 public class GameController : MonoBehaviour
@@ -19,6 +22,7 @@ public class GameController : MonoBehaviour
     private ItemsListSO _itemList;
 
     private GameStateType _gameState;
+    private RecipeQualityType _evaluatedRecipeQuality;
 
     private int _currentLevel = 0;
 
@@ -30,6 +34,9 @@ public class GameController : MonoBehaviour
 
         InputDelegatesContainer.StartGameCommand += OnStartGameCommand;
         InputDelegatesContainer.ExitToMainMenuCommand += OnExitToMainMenuCommand;
+
+        CraftingDelegatesContainer.EventRecipeEvaluationCompleted += OnRecipeEvaluationCompleted;
+        GameDelegatesContainer.EventDrumRollCompleted += OnDrumRollCompleted;
         DontDestroyOnLoad(gameObject);
     }
 
@@ -41,6 +48,9 @@ public class GameController : MonoBehaviour
 
         InputDelegatesContainer.StartGameCommand -= OnStartGameCommand;
         InputDelegatesContainer.ExitToMainMenuCommand -= OnExitToMainMenuCommand;
+
+        CraftingDelegatesContainer.EventRecipeEvaluationCompleted += OnRecipeEvaluationCompleted;
+        GameDelegatesContainer.EventDrumRollCompleted -= OnDrumRollCompleted;
     }
 
     private void Start()
@@ -78,6 +88,7 @@ public class GameController : MonoBehaviour
 
     private void OnStartGameLoadingSceneFinished()
     {
+        _gameState = GameStateType.Crafting;
         GameDelegatesContainer.StartLevel(_gameDesc.Levels[_currentLevel]);
         GameDelegatesContainer.EventLevelStarted();
     }
@@ -86,5 +97,29 @@ public class GameController : MonoBehaviour
     {
         _gameState = GameStateType.MainMenu;
         ApplicationDelegatesContainer.LoadMainMenu(null);
+    }
+
+    private void OnRecipeEvaluationCompleted(RecipeQualityType recipeQuality)
+    {
+        _gameState = GameStateType.DrumRoll;
+        _evaluatedRecipeQuality = recipeQuality;
+        GameDelegatesContainer.StartDrumRoll();
+    }
+
+    private void OnDrumRollCompleted()
+    {
+        switch (_evaluatedRecipeQuality)
+        { 
+            case RecipeQualityType.NoRecipe:
+                _gameState = GameStateType.Crafting;
+                GameDelegatesContainer.ShowNoRecipeMessage();
+                break;
+            case RecipeQualityType.Perfect:
+            case RecipeQualityType.Good:
+            case RecipeQualityType.Bad:
+                _gameState = GameStateType.LevelComplete;
+                GameDelegatesContainer.EventRecipeWasCrafted?.Invoke(_evaluatedRecipeQuality);
+                break;
+        }
     }
 }

@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace Orazum.UI 
 {
-    [DefaultExecutionOrder(-2)]
     public class UIPointerEventsUpdater : MonoBehaviour
     {
         private const float SQR_MAGNITUDE_POINTER_TOUCH_TOLERANCE = 10;
@@ -127,7 +126,7 @@ namespace Orazum.UI
 #elif UNITY_ANDROID
             if (Input.touchCount == 0)
             {
-                NotyfyManyPointerExitWithNoTouchPos();
+                NotifyManyPointerExitWithNoTouchPos();
                 return;
             }
 #endif
@@ -164,6 +163,10 @@ namespace Orazum.UI
 #endif
             }
 
+            NotifyManyPointerExitIfNeeded();
+            NotifyManyPointerEnterIfNeeded();
+            NotifyLocalPointUpdateIfNeeded();
+
 #if UNITY_EDITOR
             if (Input.GetMouseButtonUp(0))
             {
@@ -182,16 +185,17 @@ namespace Orazum.UI
                 }
                 return;
             }
-
-            NotifyManyPointerExitIfNeeded();
-            NotifyManyPointerEnterIfNeeded();
-            NotifyLocalPointUpdateIfNeeded();
         }
 
         private void NotifyOnePointerTouchIfNeeded()
         { 
             foreach (var pair in _touchHandlers)
             {
+                if (!pair.Value.ShouldInvokePointerTouchEvent)
+                {
+                    continue;
+                }
+
                 var handler = pair.Value;
 #if UNITY_EDITOR
                 if (RectTransformUtility.RectangleContainsScreenPoint(handler.Rect, _currentMousePos))
@@ -209,6 +213,11 @@ namespace Orazum.UI
         {
             foreach (var pair in _enterExitHandlers)
             {
+                if (!pair.Value.ShouldInvokePointerEnterExitEvents)
+                {
+                    continue;
+                }
+
                 var handler = pair.Value;
 #if UNITY_EDITOR
                 if (!RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect, 
@@ -227,10 +236,15 @@ namespace Orazum.UI
             }
         }
 
-        private void NotyfyManyPointerExitWithNoTouchPos()
+        private void NotifyManyPointerExitWithNoTouchPos()
         { 
             foreach (var pair in _enterExitHandlers)
             {
+                if (!pair.Value.ShouldInvokePointerEnterExitEvents)
+                {
+                    continue;
+                }
+
                 var handler = pair.Value;
                 if (handler.EnterState)
                 {
@@ -244,6 +258,11 @@ namespace Orazum.UI
         { 
             foreach (var pair in _enterExitHandlers)
             {
+                if (!pair.Value.ShouldInvokePointerEnterExitEvents)
+                {
+                    continue;
+                }
+                
                 var handler = pair.Value;
 #if UNITY_EDITOR
                 if (RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect, 

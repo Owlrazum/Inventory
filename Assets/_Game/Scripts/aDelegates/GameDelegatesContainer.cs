@@ -18,4 +18,12 @@ public static class GameDelegatesContainer
     public static Action EventLevelFailed;
 
     public static Func<bool> GetShouldShowTutorial;
+
+    public static Action StartDrumRoll;
+    public static Action EventDrumRollCompleted;
+
+    public static Action ShowNoRecipeMessage;
+    public static Action EventNoRecipeWasCrafted;
+    
+    public static Action<RecipeQualityType> EventRecipeWasCrafted;
 }

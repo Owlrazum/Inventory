@@ -30,4 +30,6 @@ public static class CraftingDelegatesContainer
 
     public static Func<RecipeQualityType> EvaluateRecipeQuality;
     public static Func<ItemSO> GetTargetItem;
+
+    public static Action<RecipeQualityType> EventRecipeEvaluationCompleted;
 }

@@ -180,6 +180,8 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler
     private bool _enterState;
     public bool EnterState { get { return _enterState; } set { _enterState = value; } }
 
+    public bool ShouldInvokePointerTouchEvent { get { return GameDelegatesContainer.GetGameState() == GameStateType.Crafting; } }
+
     private Image _image;
     private TextMeshProUGUI _textMesh;
 

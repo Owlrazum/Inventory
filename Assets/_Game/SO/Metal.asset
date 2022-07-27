@@ -15,6 +15,7 @@ MonoBehaviour:
   ID: 0
   Sprite: {fileID: 21300000, guid: 5ff822a9f4e484fb8b95ddaa5d72e880, type: 3}
   Size: {x: 1, y: 1}
+  _justToShowHelpBox: 0
   PerfectItemsData: []
   FirstGoodItemsData: []
   SecondGoodItemsData: []

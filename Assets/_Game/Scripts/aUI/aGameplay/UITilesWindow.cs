@@ -46,8 +46,7 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
     protected RectTransform _window;
     public RectTransform Rect { get { return _window; } }
 
-    protected bool _shouldUpdateLocalPoint;
-    public bool ShouldUpdateLocalPoint { get { return _shouldUpdateLocalPoint; } }
+    public bool ShouldUpdateLocalPoint { get { return GameDelegatesContainer.GetGameState() == GameStateType.Crafting; } }
 
     public int InstanceID { get { return GetInstanceID(); } }
 
@@ -69,8 +68,6 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
 #endif
 
         TryGetComponent(out _window);
-
-        _shouldUpdateLocalPoint = true;
 
         _leftGridBorder = -_gridSize.x / 2;
         _rightGridBorder = _gridSize.x / 2;
