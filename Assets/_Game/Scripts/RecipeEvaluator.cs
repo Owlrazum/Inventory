@@ -140,7 +140,6 @@ public class RecipeEvaluator : MonoBehaviour
                         return false;
                     }
 
-                    print(recipeIndex + " " + _craftTiles[craftIndex].PlacedStack.ItemType.ID);
                     if (_craftTiles[craftIndex].PlacedStack.ItemType.ID != _recipeDictionary[recipeIndex])
                     {
                         return false;

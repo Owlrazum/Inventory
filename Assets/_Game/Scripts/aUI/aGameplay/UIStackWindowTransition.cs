@@ -42,8 +42,6 @@ public class UIStackWindowTransition : MonoBehaviour
         _itemsWindowBorder = (int)(_rect.anchoredPosition.y - _rect.rect.size.y / 2);
         _borderRange = _craftWindowBorder - _itemsWindowBorder;
 
-        print(_craftWindowBorder + " " + _itemsWindowBorder);
-
         _craftWindowTileSize = CraftingDelegatesContainer.GetTileSizeInCraftWindow();
         _itemsWindowTileSize = CraftingDelegatesContainer.GetTileSizeInItemsWindow();
     }

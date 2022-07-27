@@ -65,9 +65,6 @@ public class UIStackData
     }
 }
 
-// LastPoint: Returning to its place
-// TODO: make PointerDown and PointerUp handlers
-
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
 public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerDownUpHandler
@@ -159,15 +156,10 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerDownUpHandle
         }
     }
 
-    public void UpdateRect(Vector2 anchoredPos, Vector2 sizeDelta, RectTransform newParent = null)
+    public void UpdateRect(Vector2 anchoredPos, Vector2 sizeDelta)
     {
         _rect.anchoredPosition = anchoredPos;
         _rect.sizeDelta = sizeDelta;
-        
-        if (newParent != null)
-        { 
-            _rect.SetParent(newParent, false);
-        }
     }
 
     private RectTransform _rect;

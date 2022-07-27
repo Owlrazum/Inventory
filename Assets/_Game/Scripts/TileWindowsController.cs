@@ -63,7 +63,6 @@ public class TileWindowsController : MonoBehaviour
     {
         if (uiStack.RestingWindow == WindowType.CraftWindow)
         {
-            print("Removing");
             _craftWindow.RemoveStackFromTilesReferences(uiStack);
         }
     }
@@ -78,9 +77,7 @@ public class TileWindowsController : MonoBehaviour
 
     private void OnReturningComplete(UIStack uiStack)
     {
-        print("OnLerpCompletet"); // LastPoint
         Vector2Int tilePos = _itemsWindow.GetItemToTilePos(uiStack.ItemType.ID);
-        print(tilePos);
         _itemsWindow.PlaceStack(uiStack, tilePos);
     }
 

@@ -112,7 +112,7 @@ public class UIWindowCraftGenerator : EditorWindow
 
         if (tilesContainer.TryGetComponent(out UIWindowCraft itemsWindow))
         {
-            itemsWindow.AssignTiles(generatedTiles, itemsParent, _tileSize, _gapSize, gridSize, _inventoryWindowBorderWidth);
+            itemsWindow.AssignTiles(generatedTiles, _tileSize, _gapSize, gridSize, _inventoryWindowBorderWidth);
         }
     }
 

@@ -7,6 +7,9 @@ using UnityEngine.Assertions;
 [RequireComponent(typeof(RectTransform))]
 public class UIWindowItems : UITilesWindow
 {
+    [SerializeField]
+    private RectTransform _itemStacksParent;
+
     private Dictionary<int, int> _itemsTilesRelation;
     private Vector2Int _defaultStackSize;
     protected override void Awake()
@@ -46,11 +49,11 @@ public class UIWindowItems : UITilesWindow
             int tileIndex = TileIndex(stackData.TilePos);
             stackData.TileInstanceID = _tiles[tileIndex].GetInstanceID();
 
-            uiStack.InitializeWithData(stackData, _itemsParent);
+            uiStack.InitializeWithData(stackData, _itemStacksParent);
             UpdateStackAnchPos(uiStack);
             
             uiStack.RestingWindow = WindowType.ItemsWindow;
-            uiStack.Rect.SetParent(Rect, true);
+            uiStack.Rect.SetParent(_itemStacksParent, true);
 
             _tiles[TileIndex(stackData.TilePos)].PlacedStack = uiStack;
             _itemsTilesRelation.Add(itemType.ID, tileIndex);
@@ -59,7 +62,6 @@ public class UIWindowItems : UITilesWindow
 
     private void OnLastStackWasTaken(UIStack uiStack)
     {
-        print("Last stack was taken");
         int itemID = uiStack.ItemType.ID;
         _tiles[_itemsTilesRelation[itemID]].PlacedStack = null;
     }
@@ -77,11 +79,7 @@ public class UIWindowItems : UITilesWindow
 
     public Vector2 GetItemToTileLocalAnchPos(int itemID)
     {
-        // Transform t = _tiles[_itemsTilesRelation[itemID]].Rect;
         Vector3 anchPos = _tiles[_itemsTilesRelation[itemID]].Rect.anchoredPosition;
-        // Vector3 worldPos = t.TransformPoint(anchPos);
-        // Vector3 toReturn = _tiles[_itemsTilesRelation[itemID]].Rect.parent.InverseTransformPoint(worldPos);
-        // print("LocalPositionInParent " + toReturn);
         return anchPos;
     }
 
@@ -114,8 +112,9 @@ public class UIWindowItems : UITilesWindow
     protected override void UpdateStackAnchPos(UIStack stack)
     {
         Vector2Int tilePos = stack.Data.TilePos;
-        Vector2 anchPos = _tiles[TileIndex(tilePos)].Rect.anchoredPosition;
-        stack.UpdateRect(anchPos, _defaultStackSize, _itemsParent);
+        Vector2 anchPos = _tiles[TileIndex(tilePos)].Rect.position;
+        anchPos.y = -UIDelegatesContainer.GetReferenceScreenResolution().y + anchPos.y;
+        stack.UpdateRect(anchPos, _defaultStackSize);
     }
 
     protected override void AddStackToTilesReferences(UIStack stack)

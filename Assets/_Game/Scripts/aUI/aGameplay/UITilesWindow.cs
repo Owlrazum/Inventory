@@ -18,9 +18,6 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
     protected Vector2Int _gridResolution;
 
     [SerializeField]
-    protected RectTransform _itemsParent;
-
-    [SerializeField]
     protected UITile[] _tiles;
 
     [SerializeField]
@@ -309,10 +306,11 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
     protected virtual void UpdateStackAnchPos(UIStack stack)
     {
         Vector2Int tilePos = stack.Data.TilePos;
-        Vector2 anchPos = _tiles[TileIndex(tilePos)].Rect.anchoredPosition;
+        Vector2 anchPos = _tiles[TileIndex(tilePos)].Rect.position;
+        anchPos.y = -UIDelegatesContainer.GetReferenceScreenResolution().y + anchPos.y;
         Vector2Int sizeInt = stack.ItemType.Size;
         Vector2 stackSize = new Vector2(_tileSizePixels * sizeInt.x, _tileSizePixels * sizeInt.y);
-        stack.UpdateRect(anchPos, stackSize, _itemsParent);
+        stack.UpdateRect(anchPos, stackSize);
     }
 
     protected virtual void AddStackToTilesReferences(UIStack stack)
@@ -345,7 +343,6 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
 #if UNITY_EDITOR
     public void AssignTiles(
         UITile[,] tilesArg, 
-        RectTransform itemsParentArg,
         int tileSizeArg,
         int gapSizeArg,
         Vector2Int gridSize,
@@ -353,7 +350,6 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
     )
     {
         _gridResolution = new Vector2Int(tilesArg.GetLength(0), tilesArg.GetLength(1));
-        _itemsParent = itemsParentArg;
 
         _tileSizePixels = tileSizeArg;
         _gridSize = gridSize;
