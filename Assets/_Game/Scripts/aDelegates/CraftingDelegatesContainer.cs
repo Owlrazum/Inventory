@@ -24,6 +24,7 @@ public static class CraftingDelegatesContainer
     public static Action DefaultLastHighlightInCraftWindow;
 
     public static Func<Vector2Int, Vector2Int, bool> IsPlacementPosValidInCraftWindow;
+    public static Func<Vector2Int, int, bool> IsPlacementPosValidInItemsWindow;
     public static Action<UIStack, Vector2Int, WindowType> PlaceStack;
 
     public static Action<UIStack> ReturnStack; // Free tiles in window, and then move it

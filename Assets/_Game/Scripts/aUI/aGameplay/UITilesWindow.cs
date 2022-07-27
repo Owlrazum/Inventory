@@ -89,7 +89,12 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
     }
 
     protected virtual void OnDestroy()
-    { 
+    {
+        if (UIDelegatesContainer.GetEventsUpdater != null)
+        { 
+            var updater = UIDelegatesContainer.GetEventsUpdater();
+            updater.RemovePointerLocalPointHandler(this);
+        }
     }
 
     protected virtual void Start()

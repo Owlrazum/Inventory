@@ -218,6 +218,13 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerDownUpHandle
         { 
             Data.EventItemAmountChanged -= OnItemAmountChanged;
         }
+
+        if (UIDelegatesContainer.GetEventsUpdater != null)
+        { 
+            var uiEventsUpdater = UIDelegatesContainer.GetEventsUpdater();
+            uiEventsUpdater.RemovePointerTouchHandler(this);
+            uiEventsUpdater.RemovePointerDownUpHandler(this);
+        }
     }
 
     public void ReturnToPosInItemsWindow(Vector2 targetPos, Vector2 targetSize, float lerpSpeed, Action<UIStack> OnLerpComplete)
@@ -248,16 +255,19 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerDownUpHandle
     {
         if (CraftingDelegatesContainer.IsStackSelected())
         {
+            UIDelegatesContainer.BuildLog("Stack is already");
             return;
         }
 
 
         if (RestingWindow == WindowType.ItemsWindow)
         {
+            UIDelegatesContainer.BuildLog("Select itemsWindow");
             InputDelegatesContainer.SelectStackCommand?.Invoke(this, Vector2Int.zero);
         }
         else if (RestingWindow == WindowType.CraftWindow)
         {
+            UIDelegatesContainer.BuildLog("Select craftWindow");
             Vector2Int localPoint = UIDelegatesContainer.GetEventsUpdater().GetLocalPoint(Rect, out bool isValid);
             // it returns as a negative with current sceen setup;
             // SceneChange: Hope that it will not change.

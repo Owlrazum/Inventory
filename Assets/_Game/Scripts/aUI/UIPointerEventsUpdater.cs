@@ -18,8 +18,8 @@ namespace Orazum.UI
 
         private enum TouchStateType
         { 
-            ChangedToNoTouch,
             NoTouch,
+            ChangedToNoTouch,
             ChangedToHasTouch,
             HasTouch
         }
@@ -179,7 +179,6 @@ namespace Orazum.UI
             {
                 var handler = pair.Value;
                 handler.IsPointerDown = Input.GetMouseButtonDown(0);
-                print(Input.GetMouseButtonUp(0));
                 handler.IsPointerUp = Input.GetMouseButtonUp(0);
             }
         }
@@ -206,6 +205,21 @@ namespace Orazum.UI
                 }
                 OnNotOneTouch();
                 return;
+            }
+            else
+            {
+                if (_touchDownUpState != TouchStateType.HasTouch)
+                {
+                    if (_touchDownUpState == TouchStateType.NoTouch)
+                    {
+                        _touchDownUpState = TouchStateType.ChangedToHasTouch;
+                    }
+                    else if (_touchDownUpState == TouchStateType.ChangedToHasTouch)
+                    {
+                        _touchDownUpState = TouchStateType.HasTouch;
+                    }
+                }
+                OnOneTouch();
             }
 
             _currentTouch = Input.GetTouch(0);
@@ -244,6 +258,18 @@ namespace Orazum.UI
                 {
                     var handler = pair.Value;
                     handler.IsPointerUp = true;
+                }
+            }
+        }
+
+        private void OnOneTouch()
+        {
+            if (_touchDownUpState == TouchStateType.ChangedToHasTouch)
+            {
+                foreach (var pair in _downUpHandlers)
+                {
+                    var handler = pair.Value;
+                    handler.IsPointerDown = true;
                 }
             }
         }

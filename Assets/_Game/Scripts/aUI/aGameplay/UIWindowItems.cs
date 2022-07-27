@@ -18,6 +18,7 @@ public class UIWindowItems : UITilesWindow
         GameDelegatesContainer.StartLevel += OnPrepareLevel;
 
         CraftingDelegatesContainer.EventLastStackIDWasTakenFromItemsWindow += OnLastStackWasTaken;
+        CraftingDelegatesContainer.IsPlacementPosValidInItemsWindow += IsPlacementPosValidInItemsWindow;
     }
 
     protected override void OnDestroy()
@@ -27,6 +28,7 @@ public class UIWindowItems : UITilesWindow
         GameDelegatesContainer.StartLevel -= OnPrepareLevel;
 
         CraftingDelegatesContainer.EventLastStackIDWasTakenFromItemsWindow -= OnLastStackWasTaken;
+        CraftingDelegatesContainer.IsPlacementPosValidInItemsWindow -= IsPlacementPosValidInItemsWindow;
     }
 
     private void OnPrepareLevel(LevelDescriptionSO levelDescription)
@@ -60,6 +62,17 @@ public class UIWindowItems : UITilesWindow
         print("Last stack was taken");
         int itemID = uiStack.ItemType.ID;
         _tiles[_itemsTilesRelation[itemID]].PlacedStack = null;
+    }
+
+    private bool IsPlacementPosValidInItemsWindow(Vector2Int tilePos, int itemID)
+    {
+        int tileIndex = TileIndex(tilePos);
+        if (_itemsTilesRelation[tileIndex] == itemID)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     public Vector2 GetItemToTileLocalAnchPos(int itemID)

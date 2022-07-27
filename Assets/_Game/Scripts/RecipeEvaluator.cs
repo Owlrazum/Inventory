@@ -75,6 +75,7 @@ public class RecipeEvaluator : MonoBehaviour
         }
 
         result = EvaluateRecipeItemLocations(_targetItem.SecondBadItemsData, RecipeQualityType.Bad);
+        print(result);
         if (result != RecipeQualityType.NoRecipe)
         {
             return result;
@@ -116,14 +117,17 @@ public class RecipeEvaluator : MonoBehaviour
                 }
             }
         }
+
+        _maxRecipePosX = 0;
+        _maxRecipePosY = 0;
         return RecipeQualityType.NoRecipe;
     }
 
     private bool IsRecipeFollowedExclusively(int2 startTilePos)
     {
-        for (int y = 0; y < _maxRecipePosY; y++)
+        for (int y = 0; y <= _maxRecipePosY; y++)
         {
-            for (int x = 0; x < _maxRecipePosX; x++)
+            for (int x = 0; x <= _maxRecipePosX; x++)
             { 
                 int2 craftIndex2D = new int2(x + startTilePos.x, y + startTilePos.y);
                 int  craftIndex = IndexUtilities.XyToIndex(craftIndex2D, _craftGridResolution.x);
@@ -135,6 +139,8 @@ public class RecipeEvaluator : MonoBehaviour
                     {
                         return false;
                     }
+
+                    print(recipeIndex + " " + _craftTiles[craftIndex].PlacedStack.ItemType.ID);
                     if (_craftTiles[craftIndex].PlacedStack.ItemType.ID != _recipeDictionary[recipeIndex])
                     {
                         return false;

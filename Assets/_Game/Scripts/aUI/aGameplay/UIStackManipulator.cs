@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 using Orazum.UI;
 
@@ -22,6 +21,11 @@ public class UIStackManipulator : MonoBehaviour
     private Vector2 _prevPos;
 
     private UIPointerEventsUpdater _pointerEventsUpdater;
+
+    // public bool IsPointerDown { get; set; }
+    // public bool IsPointerUp { get; set; }
+
+    // public int InstanceID { get { return GetInstanceID(); } }
 
     private void Awake()
     {
@@ -73,7 +77,8 @@ public class UIStackManipulator : MonoBehaviour
         switch (_tileUnderPointer.RestingWindow)
         {
             case WindowType.ItemsWindow:
-                _isCurrentPlacementPosValid = true;
+                _isCurrentPlacementPosValid = CraftingDelegatesContainer
+                    .IsPlacementPosValidInItemsWindow(tile.Pos, _selectedStack.ItemType.ID);
                 break;
             case WindowType.CraftWindow:
                 _isCurrentPlacementPosValid = CraftingDelegatesContainer.IsPlacementPosValidInCraftWindow(
@@ -106,7 +111,6 @@ public class UIStackManipulator : MonoBehaviour
         }
         
         _isCurrentPlacementPosValid = false;
-        _tileUnderPointer = null;
     }
 
 
@@ -120,13 +124,21 @@ public class UIStackManipulator : MonoBehaviour
 
         _isCurrentPlacementPosValid = true;
 
-        if (_tileUnderPointer.RestingWindow == WindowType.CraftWindow)
+        if (_tileUnderPointer == null)
         {
-            CraftingDelegatesContainer.HighlightTilesInCraftWindow(
-                _selectedStack, 
-                _tileUnderPointer.Pos - _stackSelectionLocalPos
-            );
+            UIDelegatesContainer.BuildLog("TileUnderPointer is NULL");
         }
+        else
+        { 
+            if (_tileUnderPointer.RestingWindow == WindowType.CraftWindow)
+            {
+                CraftingDelegatesContainer.HighlightTilesInCraftWindow(
+                    _selectedStack, 
+                    _tileUnderPointer.Pos - _stackSelectionLocalPos
+                );
+            }
+        }
+
 
         _stackFollowSequence = StackFollowSequence();
         StartCoroutine(_stackFollowSequence);
@@ -152,20 +164,23 @@ public class UIStackManipulator : MonoBehaviour
             }
         }
 
+        UIDelegatesContainer.BuildLog("toRetSel " + toReturn);
         return toReturn;
     }
 
     private IEnumerator StackFollowSequence()
     {
-        _pointerEventsUpdater.RegisterMovingUI();
+        // _pointerEventsUpdater.RegisterMovingUI();
         _prevPos = InputDelegatesContainer.GetPointerPosition();
         _prevPos -= _pickUpDelta;
         yield return null;
 
+        UIDelegatesContainer.BuildLog("Follow");
         while (true)
         {
             if (_selectedStack.IsPointerUp)
             {
+                UIDelegatesContainer.BuildLog("Place");
                 if (_isCurrentPlacementPosValid)
                 {
                     CraftingDelegatesContainer.PlaceStack(
@@ -180,7 +195,7 @@ public class UIStackManipulator : MonoBehaviour
                 }
 
                 _selectedStack = null;
-                _pointerEventsUpdater.UnregisterMovingUI();
+                // _pointerEventsUpdater.UnregisterMovingUI();
                 _stackFollowSequence = null;
 
                 yield break;
@@ -189,7 +204,7 @@ public class UIStackManipulator : MonoBehaviour
             Vector2 newPos = InputDelegatesContainer.GetPointerPosition();
             _selectedStack.Rect.anchoredPosition += newPos - _prevPos;
             _prevPos = newPos;
-            _pointerEventsUpdater.NotifyFinishedMove();
+            // _pointerEventsUpdater.NotifyFinishedMove();
             yield return null;
         }
     }

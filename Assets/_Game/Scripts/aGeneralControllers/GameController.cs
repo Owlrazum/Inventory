@@ -37,6 +37,9 @@ public class GameController : MonoBehaviour
 
         CraftingDelegatesContainer.EventRecipeEvaluationCompleted += OnRecipeEvaluationCompleted;
         GameDelegatesContainer.EventDrumRollCompleted += OnDrumRollCompleted;
+
+        InputDelegatesContainer.RetryLevelCommand += OnRetryLevelCommand;
+        InputDelegatesContainer.NextLevelCommand += OnNextLevelCommand;
         DontDestroyOnLoad(gameObject);
     }
 
@@ -51,6 +54,9 @@ public class GameController : MonoBehaviour
 
         CraftingDelegatesContainer.EventRecipeEvaluationCompleted += OnRecipeEvaluationCompleted;
         GameDelegatesContainer.EventDrumRollCompleted -= OnDrumRollCompleted;
+
+        InputDelegatesContainer.RetryLevelCommand -= OnRetryLevelCommand;
+        InputDelegatesContainer.NextLevelCommand -= OnNextLevelCommand;
     }
 
     private void Start()
@@ -117,9 +123,21 @@ public class GameController : MonoBehaviour
             case RecipeQualityType.Perfect:
             case RecipeQualityType.Good:
             case RecipeQualityType.Bad:
+                ApplicationDelegatesContainer.StartLoadingScene(1);
                 _gameState = GameStateType.LevelComplete;
                 GameDelegatesContainer.EventRecipeWasCrafted?.Invoke(_evaluatedRecipeQuality);
                 break;
         }
+    }
+
+    private void OnRetryLevelCommand()
+    {
+        ApplicationDelegatesContainer.FinishLoadingScene(OnStartGameLoadingSceneFinished);
+    }
+
+    private void OnNextLevelCommand()
+    {
+        _currentLevel++;
+        ApplicationDelegatesContainer.FinishLoadingScene(OnStartGameLoadingSceneFinished);
     }
 }
