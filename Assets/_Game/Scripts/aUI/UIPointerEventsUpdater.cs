@@ -5,22 +5,42 @@ namespace Orazum.UI
 {
     public class UIPointerEventsUpdater : MonoBehaviour
     {
-        private const float SQR_MAGNITUDE_POINTER_TOUCH_TOLERANCE = 10;
-
         [SerializeField]
         private float _offset = 1;
 
         private Dictionary<int, IPointerTouchHandler> _touchHandlers;
+        private Dictionary<int, IPointerDownUpHandler> _downUpHandlers;
         private Dictionary<int, IPointerEnterExitHandler> _enterExitHandlers;
         private Dictionary<int, IPointerLocalPointHandler> _localPointHandlers;
 
         private int _movingUICount = 0;
         private int _finishedMovingUICount = 0;
-        private bool _isBeganTouchValid;
+
+        private enum TouchStateType
+        { 
+            ChangedToNoTouch,
+            NoTouch,
+            ChangedToHasTouch,
+            HasTouch
+        }
+        private TouchStateType _touchDownUpState;
+
+        private Vector2 PointerPosition
+        {
+#if UNITY_EDITOR
+            get { return Input.mousePosition; }
+#elif UNITY_ANDROID
+            get {return _currentTouch.position;}
+#endif            
+        }
+
+        private Vector2 GetPointerPosition()
+        {
+            return PointerPosition;
+        }
 
 #if UNITY_EDITOR
         private Vector2 _pressMousePos;
-        private Vector2 _currentMousePos;
 #elif UNITY_ANDROID
         private Touch _currentTouch;
 #endif
@@ -28,20 +48,28 @@ namespace Orazum.UI
         private void Awake()
         {
             _touchHandlers      = new Dictionary<int, IPointerTouchHandler>();
+            _downUpHandlers     = new Dictionary<int, IPointerDownUpHandler>();
             _enterExitHandlers  = new Dictionary<int, IPointerEnterExitHandler>();
             _localPointHandlers = new Dictionary<int, IPointerLocalPointHandler>();
 
             UIDelegatesContainer.GetEventsUpdater += GetUpdater;
+            InputDelegatesContainer.GetPointerPosition += GetPointerPosition;
         }
 
         private void OnDestroy()
         { 
             UIDelegatesContainer.GetEventsUpdater -= GetUpdater;
+            InputDelegatesContainer.GetPointerPosition -= GetPointerPosition;
         }
 
         public void AddPointerTouchHandler(IPointerTouchHandler handler)
         {
             _touchHandlers.Add(handler.InstanceID, handler);
+        }
+
+        public void AddPointerDownUpHandler(IPointerDownUpHandler handler)
+        {
+            _downUpHandlers.Add(handler.InstanceID, handler);
         }
 
         public void AddPointerEnterExitHandler(IPointerEnterExitHandler handler)
@@ -58,6 +86,11 @@ namespace Orazum.UI
         public void RemovePointerTouchHandler(IPointerTouchHandler handler)
         {
             _touchHandlers.Remove(handler.InstanceID);
+        }
+
+        public void RemovePointerDownUpHandler(IPointerDownUpHandler handler)
+        {
+            _downUpHandlers.Remove(handler.InstanceID);
         }
 
         public void RemovePointerEnterExitHandler(IPointerEnterExitHandler handler)
@@ -93,23 +126,20 @@ namespace Orazum.UI
 
         public Vector2Int GetLocalPoint(RectTransform rect, out bool isValid)
         {
-#if UNITY_EDITOR
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(rect,
-                Input.mousePosition, null, out Vector2 localPoint
-            );
             isValid = true;
-#elif UNITY_ANDROID
+#if UNITY_ANDROID && !UNITY_EDITOR
             if (Input.touchCount != 1)
             {
                 isValid = false;
                 return Vector2Int.zero;
             }
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(rect,
-                _currentTouch.position, null, out Vector2 localPoint
-            );
 #endif
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(rect,
+                PointerPosition, null, out Vector2 localPoint
+            );
             return new Vector2Int((int)localPoint.x, (int)localPoint.y);
         }
+
 
         private void Update()
         {
@@ -120,123 +150,78 @@ namespace Orazum.UI
             }
         }
 
+        private UIPointerEventsUpdater GetUpdater()
+        {
+            return this;
+        }
+
+#region UNITY_EDITOR
+#if UNITY_EDITOR
+
         private void UpdatePointerHandlers()
         {
-#if UNITY_EDITOR
-#elif UNITY_ANDROID
-            if (Input.touchCount == 0)
-            {
-                NotifyManyPointerExitWithNoTouchPos();
-                return;
-            }
-#endif
-
-#if UNITY_EDITOR
-            _currentMousePos = Input.mousePosition;
-            if (Input.GetMouseButtonDown(0))
-            {
-                _isBeganTouchValid = true;
-                _pressMousePos = Input.mousePosition;
-                return;
-            }
-#elif UNITY_ANDROID
-            _currentTouch = Input.GetTouch(0);
-    
-            if (_currentTouch.phase == TouchPhase.Began)
-            {
-                _isBeganTouchValid = true;
-                return;
-            }
-#endif
-            if (_isBeganTouchValid)
-            {
-#if UNITY_EDITOR
-                if ((_currentMousePos - _pressMousePos).sqrMagnitude > SQR_MAGNITUDE_POINTER_TOUCH_TOLERANCE)
-                {
-                    _isBeganTouchValid = false;
-                }
-#elif UNITY_ANDROID
-                if (_currentTouch.deltaPosition.sqrMagnitude > SQR_MAGNITUDE_POINTER_TOUCH_TOLERANCE)
-                {
-                    _isBeganTouchValid = false;
-                }
-#endif
-            }
+            UpdateDownUpHandlers();
 
             NotifyManyPointerExitIfNeeded();
             NotifyManyPointerEnterIfNeeded();
             NotifyLocalPointUpdateIfNeeded();
 
-#if UNITY_EDITOR
-            if (Input.GetMouseButtonUp(0))
+            if (Input.GetMouseButtonDown(0))
             {
-#elif UNITY_ANDROID
-            if (_currentTouch.phase == TouchPhase.Ended || _currentTouch.phase == TouchPhase.Canceled)
-            {
-#endif
-                if (_isBeganTouchValid)
-                {
-                    NotifyOnePointerTouchIfNeeded();
-                    _isBeganTouchValid = false;
-                }
-                else
-                { 
-                    NotifyManyPointerExitIfNeeded();
-                }
+                NotifyOnePointerTouchIfNeeded();
                 return;
             }
         }
 
-        private void NotifyOnePointerTouchIfNeeded()
+        private void UpdateDownUpHandlers()
         { 
-            foreach (var pair in _touchHandlers)
+            foreach (var pair in _downUpHandlers)
             {
-                if (!pair.Value.ShouldInvokePointerTouchEvent)
-                {
-                    continue;
-                }
-
                 var handler = pair.Value;
-#if UNITY_EDITOR
-                if (RectTransformUtility.RectangleContainsScreenPoint(handler.Rect, _currentMousePos))
-#elif UNITY_ANDROID
-                if (RectTransformUtility.RectangleContainsScreenPoint(handler.Rect, _currentTouch.position))
-#endif
-                { 
-                    handler.OnPointerTouch();
-                    return;
-                }
+                handler.IsPointerDown = Input.GetMouseButtonDown(0);
+                print(Input.GetMouseButtonUp(0));
+                handler.IsPointerUp = Input.GetMouseButtonUp(0);
             }
         }
-
-        private void NotifyManyPointerExitIfNeeded()
-        {
-            foreach (var pair in _enterExitHandlers)
-            {
-                if (!pair.Value.ShouldInvokePointerEnterExitEvents)
-                {
-                    continue;
-                }
-
-                var handler = pair.Value;
-#if UNITY_EDITOR
-                if (!RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect, 
-                    _currentMousePos, null, Vector4.one * _offset))
-#elif UNITY_ANDROID
-                if (!RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect, 
-                    _currentTouch.position, null, Vector4.one * _offset))
 #endif
+#endregion
+
+#region UNITY_ANDROID
+#if UNITY_ANDROID && !UNITY_EDITOR
+        private void UpdatePointerHandlers()
+        {
+            ResetDownUpHanlders();
+            if (Input.touchCount != 1)
+            {
+                if (_touchDownUpState != TouchStateType.NoTouch)
                 {
-                    if (handler.EnterState)
+                    if (_touchDownUpState == TouchStateType.HasTouch)
                     {
-                        handler.EnterState = false;
-                        handler.OnPointerExit();
+                        _touchDownUpState = TouchStateType.ChangedToNoTouch;
+                    }
+                    else if (_touchDownUpState == TouchStateType.ChangedToNoTouch)
+                    {
+                        _touchDownUpState = TouchStateType.NoTouch;
                     }
                 }
+                OnNotOneTouch();
+                return;
+            }
+
+            _currentTouch = Input.GetTouch(0);
+    
+            NotifyManyPointerExitIfNeeded();
+            NotifyManyPointerEnterIfNeeded();
+            NotifyLocalPointUpdateIfNeeded();
+
+            if (_currentTouch.phase == TouchPhase.Began)
+            {
+                NotifyOnePointerTouchIfNeeded();
+                return;
             }
         }
 
-        private void NotifyManyPointerExitWithNoTouchPos()
+         private void OnNotOneTouch()
         { 
             foreach (var pair in _enterExitHandlers)
             {
@@ -251,9 +236,68 @@ namespace Orazum.UI
                     handler.EnterState = false;
                     handler.OnPointerExit();
                 }
-            }            
-        }
+            }
 
+            if (_touchDownUpState == TouchStateType.ChangedToNoTouch)
+            { 
+                foreach (var pair in _downUpHandlers)
+                {
+                    var handler = pair.Value;
+                    handler.IsPointerUp = true;
+                }
+            }
+        }
+        
+        private void ResetDownUpHanlders()
+        {
+            foreach (var pair in _downUpHandlers)
+            {
+                var handler = pair.Value;
+                handler.IsPointerDown = false;
+                handler.IsPointerUp = false;
+            }
+        }
+#endif
+#endregion
+
+        private void NotifyOnePointerTouchIfNeeded()
+        { 
+            foreach (var pair in _touchHandlers)
+            {
+                if (!pair.Value.ShouldInvokePointerTouchEvent)
+                {
+                    continue;
+                }
+
+                var handler = pair.Value;
+                if (RectTransformUtility.RectangleContainsScreenPoint(handler.Rect, PointerPosition))
+                { 
+                    handler.OnPointerTouch();
+                    return;
+                }
+            }
+        }
+        private void NotifyManyPointerExitIfNeeded()
+        {
+            foreach (var pair in _enterExitHandlers)
+            {
+                if (!pair.Value.ShouldInvokePointerEnterExitEvents)
+                {
+                    continue;
+                }
+
+                var handler = pair.Value;
+                if (!RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect, 
+                    PointerPosition, null, Vector4.one * _offset))
+                {
+                    if (handler.EnterState)
+                    {
+                        handler.EnterState = false;
+                        handler.OnPointerExit();
+                    }
+                }
+            }
+        }
         private void NotifyManyPointerEnterIfNeeded()
         { 
             foreach (var pair in _enterExitHandlers)
@@ -264,13 +308,8 @@ namespace Orazum.UI
                 }
                 
                 var handler = pair.Value;
-#if UNITY_EDITOR
                 if (RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect, 
-                    _currentMousePos, null, Vector4.one * _offset))
-#elif UNITY_ANDROID
-                if (RectTransformUtility.RectangleContainsScreenPoint(handler.InteractionRect,
-                     _currentTouch.position, null, Vector4.one * _offset))
-#endif
+                    PointerPosition, null, Vector4.one * _offset))
                 {
                     if (!handler.EnterState)
                     {
@@ -280,7 +319,6 @@ namespace Orazum.UI
                 }
             }
         }
-
         private void NotifyLocalPointUpdateIfNeeded()
         { 
             foreach (var pair in _localPointHandlers)
@@ -288,23 +326,12 @@ namespace Orazum.UI
                 var handler = pair.Value;
                 if (handler.ShouldUpdateLocalPoint)
                 {
-#if UNITY_EDITOR
                     RectTransformUtility.ScreenPointToLocalPointInRectangle(handler.Rect,
-                        _currentMousePos, null, out Vector2 localPoint
+                        PointerPosition, null, out Vector2 localPoint
                     );
-#elif UNITY_ANDROID
-                    RectTransformUtility.ScreenPointToLocalPointInRectangle(handler.Rect,
-                        _currentTouch.position, null, out Vector2 localPoint
-                    );
-#endif
                     handler.UpdateLocalPoint(new Vector2Int((int)localPoint.x, (int)localPoint.y));
                 }
             }
-        }
-
-        private UIPointerEventsUpdater GetUpdater()
-        {
-            return this;
         }
     }
 }

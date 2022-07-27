@@ -70,7 +70,7 @@ public class UIStackData
 
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
-public class UIStack : MonoBehaviour, IPointerTouchHandler
+public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerDownUpHandler
 {
     public UIStackData Data { get; private set; }
     public RectTransform BoundingRect { get; private set; }
@@ -180,6 +180,9 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler
     private bool _enterState;
     public bool EnterState { get { return _enterState; } set { _enterState = value; } }
 
+    public bool IsPointerDown { get; set; }
+    public bool IsPointerUp { get; set; }
+
     public bool ShouldInvokePointerTouchEvent { get { return GameDelegatesContainer.GetGameState() == GameStateType.Crafting; } }
 
     private Image _image;
@@ -206,6 +209,7 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler
     {
         var uiEventsUpdater = UIDelegatesContainer.GetEventsUpdater();
         uiEventsUpdater.AddPointerTouchHandler(this);
+        uiEventsUpdater.AddPointerDownUpHandler(this);
     }
 
     private void OnDestroy()
@@ -246,6 +250,7 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler
         {
             return;
         }
+
 
         if (RestingWindow == WindowType.ItemsWindow)
         {

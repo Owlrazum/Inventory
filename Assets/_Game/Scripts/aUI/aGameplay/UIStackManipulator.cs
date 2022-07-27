@@ -158,14 +158,13 @@ public class UIStackManipulator : MonoBehaviour
     private IEnumerator StackFollowSequence()
     {
         _pointerEventsUpdater.RegisterMovingUI();
-#if UNITY_EDITOR
-        _prevPos = Input.mousePosition;
+        _prevPos = InputDelegatesContainer.GetPointerPosition();
         _prevPos -= _pickUpDelta;
         yield return null;
 
         while (true)
         {
-            if (Input.GetMouseButtonDown(0))
+            if (_selectedStack.IsPointerUp)
             {
                 if (_isCurrentPlacementPosValid)
                 {
@@ -187,56 +186,11 @@ public class UIStackManipulator : MonoBehaviour
                 yield break;
             }
 
-            Vector2 newPos = Input.mousePosition;
+            Vector2 newPos = InputDelegatesContainer.GetPointerPosition();
             _selectedStack.Rect.anchoredPosition += newPos - _prevPos;
             _prevPos = newPos;
             _pointerEventsUpdater.NotifyFinishedMove();
             yield return null;
         }
-#endif
     }
 }
-
-// Android implementations
-/*
-    #elif UNITY_ANDROID
-        Touch touch = Input.GetTouch(0);
-        _prevPos = touch.position;
-        _prevPos -= _pickUpDelta;
-        yield return null;
-
-        while (true)
-        {
-            if (Input.touchCount != 1)
-            { 
-                if (_isCurrentPlacementPosValid)
-                {
-                    UIStack toPlace = _selectedStack;
-                    _selectedStack = CraftingDelegatesContainer.QueryPushedOutByPlacementStack();
-
-                    CraftingDelegatesContainer.EventStackPlacementUnderPointer?.Invoke(toPlace, _selectedStackFillState[0]);
-                    CheckPushedOutStackSelection();
-                    if (_selectedStack == null)
-                    { 
-                        UIEventsContainer.EventUnregisterMovingUI?.Invoke();
-                        _stackFollowSequence = null;
-                        yield break;
-                    }
-
-                    _prevPos = Input.mousePosition;
-                    _prevPos -= _pickUpDelta;
-                }
-                else
-                {
-                    CraftingDelegatesContainer.ActionReturnStackToItsPlace(_selectedStack);
-                }
-            }
-
-            touch = Input.GetTouch(0);
-            Vector2 newPos = touch.position;
-            _selectedStack.Rect.anchoredPosition += newPos - _prevPos;
-            _prevPos = newPos;
-            UIEventsContainer.EventMovingUIFinishedMove?.Invoke();
-            yield return null;
-        }
-*/
