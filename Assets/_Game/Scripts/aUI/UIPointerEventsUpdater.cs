@@ -355,7 +355,7 @@ namespace Orazum.UI
                     RectTransformUtility.ScreenPointToLocalPointInRectangle(handler.Rect,
                         PointerPosition, null, out Vector2 localPoint
                     );
-                    handler.UpdateLocalPoint(new Vector2Int((int)localPoint.x, (int)localPoint.y));
+                    handler.UpdateWithLocalPointFromPointer(new Vector2Int((int)localPoint.x, (int)localPoint.y));
                 }
             }
         }

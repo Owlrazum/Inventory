@@ -630,27 +630,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9058eb4b670a64b589ad2530b6576c4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _gridResolution: {x: 3, y: 5}
-  _tiles:
-  - {fileID: 422658490}
-  - {fileID: 543468824}
-  - {fileID: 1831107053}
-  - {fileID: 1061029735}
-  - {fileID: 1347232824}
-  - {fileID: 611138575}
-  - {fileID: 1707532746}
-  - {fileID: 1911803377}
-  - {fileID: 1234675824}
-  - {fileID: 1160813400}
-  - {fileID: 2117948316}
-  - {fileID: 2031626373}
-  - {fileID: 1940910240}
-  - {fileID: 1455268220}
-  - {fileID: 781526782}
-  _tileSizePixels: 200
-  _gapSize: 0
-  _gridSize: {x: 600, y: 1000}
-  _windowSize: {x: 605, y: 1010}
 --- !u!1 &422658488
 GameObject:
   m_ObjectHideFlags: 0
@@ -1479,7 +1458,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &751828810
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2809,7 +2788,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1450932437
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3658,15 +3637,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 848a2737cad8a4d8fbe57873982b1a4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _gridResolution: {x: 3, y: 1}
-  _tiles:
-  - {fileID: 461895433}
-  - {fileID: 1219089761}
-  - {fileID: 878631048}
-  _tileSizePixels: 250
-  _gapSize: 20
-  _gridSize: {x: 790, y: 250}
-  _windowSize: {x: 795, y: 260}
   _itemStacksParent: {fileID: 611343525}
 --- !u!1 &1851868567
 GameObject:

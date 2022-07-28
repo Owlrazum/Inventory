@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e323e30d287a4522b5f368a26eef751, type: 3}
+  m_Name: CraftWindow
+  m_EditorClassIdentifier: 
+  _tilePrefab: {fileID: 7179047468529095230, guid: bdc144f22ca164922a8115038f2d6c72,
+    type: 3}
+  _windowBorderWidth: {x: 5, y: 10}
+  _gridResolution: {x: 3, y: 5}
+  _tileSize: 200
+  _gapSize: 0

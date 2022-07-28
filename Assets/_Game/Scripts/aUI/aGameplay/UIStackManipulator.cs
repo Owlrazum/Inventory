@@ -103,13 +103,14 @@ public class UIStackManipulator : MonoBehaviour
         { 
             // Perhaps the bug is here
             _tileUnderPointer.UndoDebugColor();
+
+            if (_selectedStack != null && _tileUnderPointer.RestingWindow == WindowType.CraftWindow)
+            {
+                CraftingDelegatesContainer.DefaultLastHighlightInCraftWindow?.Invoke();   
+            }
         }
 
-        if (_selectedStack != null && _tileUnderPointer.RestingWindow == WindowType.CraftWindow)
-        {
-            CraftingDelegatesContainer.DefaultLastHighlightInCraftWindow?.Invoke();   
-        }
-        
+        _tileUnderPointer = null;
         _isCurrentPlacementPosValid = false;
     }
 

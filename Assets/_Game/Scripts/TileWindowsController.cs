@@ -16,9 +16,6 @@ public class TileWindowsController : MonoBehaviour
         CraftingDelegatesContainer.GetTileSizeInCraftWindow += GetTileSizeInCraftWindow;
         CraftingDelegatesContainer.GetTileSizeInItemsWindow += GetTileSizeInItemsWindow;
 
-        CraftingDelegatesContainer.GetCursorLocationCraftWindow += GetCursorLocationCraftWindow;
-        CraftingDelegatesContainer.GetCursorLocationItemsWindow += GetCursorLocationItemsWindow;
-        
         CraftingDelegatesContainer.EventStackWasSelected += OnStackWasSelected;
         CraftingDelegatesContainer.ReturnStack += ReturnStack;
 
@@ -31,9 +28,6 @@ public class TileWindowsController : MonoBehaviour
         CraftingDelegatesContainer.GetTileSizeInCraftWindow -= GetTileSizeInCraftWindow;
         CraftingDelegatesContainer.GetTileSizeInItemsWindow -= GetTileSizeInItemsWindow;
 
-        CraftingDelegatesContainer.GetCursorLocationCraftWindow -= GetCursorLocationCraftWindow;
-        CraftingDelegatesContainer.GetCursorLocationItemsWindow -= GetCursorLocationItemsWindow;
-
         CraftingDelegatesContainer.EventStackWasSelected -= OnStackWasSelected;
         CraftingDelegatesContainer.ReturnStack -= ReturnStack;
 
@@ -43,20 +37,11 @@ public class TileWindowsController : MonoBehaviour
 
     private int GetTileSizeInCraftWindow()
     {
-        return _craftWindow.TileSizePixels;
+        return _craftWindow.GetTileSize();
     }
     private int GetTileSizeInItemsWindow()
     {
-        return _itemsWindow.TileSizePixels;
-    }
-
-    private CursorLocationType GetCursorLocationCraftWindow()
-    {
-        return _craftWindow.CursorLocation;
-    }
-    private CursorLocationType GetCursorLocationItemsWindow()
-    { 
-        return _itemsWindow.CursorLocation;
+        return _itemsWindow.GetTileSize();
     }
 
     private void OnStackWasSelected(UIStack uiStack)
@@ -98,42 +83,3 @@ public class TileWindowsController : MonoBehaviour
         }
     }
 }
-
-
-
-/*
-    private void AddExistingStack(UIStack uiStack, Vector2Int tilePos)
-    {
-        uiStack.Data.TilePos = tilePos;
-        UpdateStackAnchPos(uiStack);
-        AssignStackToTilesReferences(uiStack);
-    }
-
-    private UIStack AddNewStack(UIStackData stackData)
-    { 
-        UIStack uiStack = PoolingDelegatesContainer.SpawnStack();
-        uiStack.InitializeWithData(stackData, _itemsParent);
-        Vector2Int stackSizeInt = CraftingDelegatesContainer.GetItemSO(stackData.ItemTypeID).Size;
-
-        UpdateStackAnchPos(uiStack);
-        AssignStackToTilesReferences(uiStack);
-        
-        return uiStack;
-    }
-
-    private UIStack AddNewStack(ItemSO itemType, int itemAmount, Vector2Int tilePos)
-    {
-        UIStack uiStack = PoolingDelegatesContainer.SpawnStack();
-
-        UIStackData stackData = new UIStackData();
-        stackData.ItemAmount = itemAmount;
-        stackData.ItemTypeID = itemType.ID;
-        stackData.TilePos = tilePos;
-
-        uiStack.InitializeWithData(stackData, _itemsParent);
-        UpdateStackAnchPos(uiStack);
-        AssignStackToTilesReferences(uiStack);
-
-        return uiStack;
-    }
-*/

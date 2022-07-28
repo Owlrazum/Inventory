@@ -7,9 +7,6 @@ public static class CraftingDelegatesContainer
     public static Func<int> GetTileSizeInCraftWindow;
     public static Func<int> GetTileSizeInItemsWindow;
 
-    public static Func<CursorLocationType> GetCursorLocationCraftWindow;
-    public static Func<CursorLocationType> GetCursorLocationItemsWindow;
-
     public static Func<UITile[]> GetCraftTiles;
     public static Func<Vector2Int> GetCraftTilesGridResolution;
 

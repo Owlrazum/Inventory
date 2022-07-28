@@ -109,11 +109,6 @@ public class UIWindowCraftGenerator : EditorWindow
             tilePos += verticalDisplacement;
             rowStartTilePos = tilePos;
         }
-
-        if (tilesContainer.TryGetComponent(out UIWindowCraft itemsWindow))
-        {
-            itemsWindow.AssignTiles(generatedTiles, _tileSize, _gapSize, gridSize, _inventoryWindowBorderWidth);
-        }
     }
 
     private RectTransform CreateTilesContainer(string name, Transform totalWindowTransform)

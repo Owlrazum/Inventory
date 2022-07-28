@@ -1,92 +1,62 @@
-using System.Collections.Generic;
 using UnityEngine.Assertions;
 using UnityEngine;
 using Orazum.UI;
 
-public enum CursorLocationType
+// All sizes calcs are made in ints, because float point precision is not required.
+[RequireComponent(typeof(RectTransform))]
+public abstract class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
 {
-    NotInitialized,
-    OnTile,
-    InsideWindow,
-    OutsideWindow
-}
+    // generation params are stored in abstract class and serve as properties.
+    protected abstract WindowType InitializeWindowType();
+    protected abstract UITile[] GenerateTiles(in TileGenParamsSO generationParams, out RectTransform tileGridRect);
+    protected abstract void OnLocalPointUpdate(in UITile tileUnderPointer);
+    public abstract void PlaceStack(UIStack stack, Vector2Int tilePos);
 
-// All sizes are in screen space pixels;
-public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
-{ 
-    [SerializeField]
-    protected Vector2Int _gridResolution;
+    protected WindowType _windowType;
+    private TileGenParamsSO _tileGenParamsSO;
 
-    [SerializeField]
+    protected Vector2Int GridResolution { get { return _tileGenParamsSO.GridResolution; } }
+    protected int TileSize { get { return _tileGenParamsSO.TileSize; } }
+    protected int GapSize { get { return _tileGenParamsSO.GapSize; } }
+    public int GetTileSize()
+    {
+        return TileSize;
+    }
+
     protected UITile[] _tiles;
 
-    [SerializeField]
-    protected int _tileSizePixels;
-    public int TileSizePixels { get { return _tileSizePixels; } }
+    protected RectTransform _windowRect;
+    private RectTransform _tileGridRect;
+    private Vector2Int _tileGridSize;
 
-    [SerializeField]
-    private int _gapSize;
-
-    [SerializeField]
-    private Vector2Int _gridSize;
-
-    [SerializeField]
-    private Vector2Int _windowSize;
-
-    protected HashSet<int> _tilesInstanceIDs;
-
-    private CursorLocationType _cursorLocation;
-    public CursorLocationType CursorLocation { get { return _cursorLocation; } }
-
-    protected UITile _tileUnderPointer; 
-
-    protected RectTransform _window;
-    public RectTransform Rect { get { return _window; } }
-
+    public RectTransform Rect { get { return _tileGridRect; } }
     public bool ShouldUpdateLocalPoint { get { return GameDelegatesContainer.GetGameState() == GameStateType.Crafting; } }
-
     public int InstanceID { get { return GetInstanceID(); } }
 
-    private int _leftGridBorder;
-    private int _rightGridBorder;
-    private int _bottomGridBorder;
-    private int _topGridBorder;
-
-    private Vector2Int _localPoint;
-
     protected virtual void Awake()
-    { 
-#if UNITY_EDITOR
-        if (_tiles == null)
-        {
-            Debug.LogError("You should generate an inventory through window InventoryGeneratorWindow");
-            return;
-        }
-#endif
+    {
+        bool isFound = true;
+        isFound &= TryGetComponent(out _tileGridRect);
+        isFound &= TryGetComponent(out _windowRect);
 
-        TryGetComponent(out _window);
+        Assert.IsTrue(isFound);
 
-        _leftGridBorder = -_gridSize.x / 2;
-        _rightGridBorder = _gridSize.x / 2;
-        _bottomGridBorder = -_gridSize.y / 2;
-        _topGridBorder = _gridSize.y / 2;
-
-
-        _tilesInstanceIDs = new HashSet<int>();
-        for (int i = 0; i < _tiles.Length; i++)
-        {
-            _tilesInstanceIDs.Add(_tiles[i].GetInstanceID());
-        }
-
+        _windowType = InitializeWindowType();
         Subscribe();
     }
-
     protected virtual void Subscribe()
-    { 
+    {
+        GameDelegatesContainer.StartLevel += OnStartLevel;
     }
-
+    protected virtual void Start()
+    {
+        var updater = UIDelegatesContainer.GetEventsUpdater();
+        updater.AddPointerLocalPointHandler(this);
+    }
     protected virtual void OnDestroy()
     {
+        GameDelegatesContainer.StartLevel -= OnStartLevel;
+
         if (UIDelegatesContainer.GetEventsUpdater != null)
         { 
             var updater = UIDelegatesContainer.GetEventsUpdater();
@@ -94,109 +64,63 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
         }
     }
 
-    protected virtual void Start()
+    protected virtual void OnStartLevel(LevelDescriptionSO levelDescriptionSO)
     {
-        var updater = UIDelegatesContainer.GetEventsUpdater();
-        updater.AddPointerLocalPointHandler(this);
+        _tileGenParamsSO = levelDescriptionSO.GetTileGenParams(_windowType);
+        _tiles = GenerateTiles(in _tileGenParamsSO, out _tileGridRect);
+        _tileGridSize = Vector2Int.RoundToInt(_tileGridRect.rect.size);
     }
 
-    public void UpdateLocalPoint(in Vector2Int localPointArg)
+    public void UpdateWithLocalPointFromPointer(in Vector2Int localPoint)
     {
-        _localPoint = localPointArg;
-
-        _cursorLocation = CursorLocationType.NotInitialized;
-        bool isSufficientCheck;
-
-        CheckIfLocalPointOutsideGrid(out isSufficientCheck);
-        if (isSufficientCheck)
+        if (CheckIfLocalPointOutsideGrid(in localPoint))
         {
             return;
         }
 
-        bool isPosValid;
-        int row;
-        int col;
-        if (_gapSize != 0)
+        UITile tileUnderPointer = DetermineTileFromLocalPoint(localPoint);
+        OnLocalPointUpdate(tileUnderPointer);
+    }
+    private bool CheckIfLocalPointOutsideGrid(in Vector2Int localPoint)
+    {
+        if (localPoint.x < _tileGridRect.rect.xMin || localPoint.x > _tileGridRect.rect.xMax
+            ||
+            localPoint.y < _tileGridRect.rect.yMin || localPoint.y > _tileGridRect.rect.yMax)
         {
-            DetermineCursorLocationWithGapsBetweenTiles(out isPosValid, out row, out col);
-            if (isPosValid)
-            { 
-                Assert.IsTrue(row >= 0 && row < _gridResolution.y);
-                Assert.IsTrue(col >= 0 && col < _gridResolution.x);
-            }
+            return true;
+        } 
+
+        return false;
+    }
+    private UITile DetermineTileFromLocalPoint(in Vector2Int localPoint)
+    {
+        if (_tileGenParamsSO.GapSize > 0)
+        {
+            return GetTileWithGapsInGrid(localPoint);
         }
         else
         {
-            int adjustedLocalPoint = (-_localPoint.y + _gridSize.y / 2);
-            if (adjustedLocalPoint == _tileSizePixels * _gridResolution.y)
-            {
-                adjustedLocalPoint--;
-            }
-            row = adjustedLocalPoint / _tileSizePixels;
-            Assert.IsTrue(row >= 0 && row < _gridResolution.y);
-
-            adjustedLocalPoint = (_localPoint.x + _gridSize.x / 2);
-            if (adjustedLocalPoint == _tileSizePixels * _gridResolution.x)
-            {
-                adjustedLocalPoint--;
-            }
-            col = adjustedLocalPoint / _tileSizePixels;
-            Assert.IsTrue(col >= 0 && col < _gridResolution.x);
-            _cursorLocation = CursorLocationType.OnTile;
-            isPosValid = true;
-        }
-
-        NotifyBasedOnCursorLocation(isPosValid, row, col);
-    }
-
-    private void CheckIfLocalPointOutsideGrid(out bool isSufficientCheck)
-    {
-        isSufficientCheck = false;
-        if (_localPoint.x < _leftGridBorder || _localPoint.x > _rightGridBorder
-            ||
-            _localPoint.y < _bottomGridBorder || _localPoint.y > _topGridBorder)
-        {
-            if (_localPoint.x < -_windowSize.x / 2 || _localPoint.x > _windowSize.x / 2
-                ||
-                _localPoint.y < -_windowSize.y / 2 || _localPoint.y > _windowSize.y / 2)
-            {
-                _cursorLocation = CursorLocationType.OutsideWindow;
-            }
-            else
-            {
-                _cursorLocation = CursorLocationType.InsideWindow;
-            }
-            
-            if (_tileUnderPointer != null)
-            {
-                CraftingDelegatesContainer.EventTileUnderPointerGone?.Invoke();
-            }
-            _tileUnderPointer = null;
-            isSufficientCheck = true;
+            return GetTileWithoutGapsInGrid(localPoint);
         }
     }
-    
-    private void DetermineCursorLocationWithGapsBetweenTiles(out bool isPosValid, out int row, out int col)
+    private UITile GetTileWithGapsInGrid(in Vector2Int localPoint)
     {
-        row = -1;
-        col = -1;
-
-        Vector2Int adjustedLocalPoint = _localPoint + _gridSize / 2;
-        if (adjustedLocalPoint.x == _tileSizePixels * _gridResolution.x + _gapSize * (_gridResolution.x - 1))
+        Vector2Int adjustedLocalPoint = localPoint + _tileGridSize / 2;
+        if (adjustedLocalPoint.x == TileSize * GridResolution.x + GapSize * (GridResolution.x - 1))
         {
             adjustedLocalPoint.x--;
         }
-        if (adjustedLocalPoint.y == _tileSizePixels * _gridResolution.y + _gapSize * (_gridResolution.y - 1))
+        if (adjustedLocalPoint.y == TileSize * GridResolution.y + GapSize * (GridResolution.y - 1))
         {
             adjustedLocalPoint.y--;
         }
 
-        int leftBorder = _tileSizePixels + _gapSize / 2;
-        int rightBorder = _gridSize.x - _tileSizePixels - _gapSize / 2;
+        int leftBorder = TileSize + GapSize / 2;
+        int rightBorder = _tileGridSize.x - TileSize - GapSize / 2;
         // adjustedLocalPoint.x -= leftBorder;
 
         int bottomBorder = leftBorder;
-        int topBorder = _gridSize.y - _tileSizePixels - _gapSize / 2;
+        int topBorder = _tileGridSize.y - TileSize - GapSize / 2;
         // adjustedLocalPoint.y -= bottomBorder;
 
         bool isBeyondLeftBorder = adjustedLocalPoint.x < leftBorder;
@@ -204,167 +128,95 @@ public class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
         bool isBeyondBottomBorder = adjustedLocalPoint.y < bottomBorder;
         bool isBeyondTopBorder = adjustedLocalPoint.y > topBorder;
 
+        int col = -1;
         if (isBeyondLeftBorder)
         { 
             col = 0;
         }
         else if (isBeyondRightBorder)
         {
-            col = _gridResolution.x - 1;
+            col = GridResolution.x - 1;
         }
         else
         {
-            int segmentWidth = _tileSizePixels;
-            if (_gridResolution.x > 1)
+            int segmentWidth = TileSize;
+            if (GridResolution.x > 1)
             {
-                segmentWidth += _gapSize;
+                segmentWidth += GapSize;
             }
 
             col = (adjustedLocalPoint.x - leftBorder) / segmentWidth + 1;
             int segmentStart = (col - 1) * segmentWidth + leftBorder;
             int segmentPoint = adjustedLocalPoint.x - segmentStart;
-            if (segmentPoint < _gapSize / 2 ||
-                segmentPoint > _tileSizePixels + _gapSize / 2)
+            if (segmentPoint < GapSize / 2 ||
+                segmentPoint > TileSize + GapSize / 2)
             {
-                isPosValid = false;
-                _cursorLocation = CursorLocationType.InsideWindow;
-                return;
+                return null;
             }
         }
 
+        int row = -1;
         if (isBeyondTopBorder)
         {
             row = 0;
         }
         else if (isBeyondBottomBorder)
         {
-            row = _gridResolution.y - 1;
+            row = GridResolution.y - 1;
         }
         else
         {
-            int segmentHeight = _tileSizePixels;
-            if (_gridResolution.y > 1)
+            int segmentHeight = TileSize;
+            if (GridResolution.y > 1)
             {
-                segmentHeight += _gapSize;
+                segmentHeight += GapSize;
             }
 
             row = (adjustedLocalPoint.y - bottomBorder) / segmentHeight + 1;
             int segmentStart = (row - 1) * segmentHeight + bottomBorder;
             int segmentPoint = adjustedLocalPoint.y - segmentStart;
-            if (segmentPoint < _gapSize / 2 ||
-                segmentPoint > _tileSizePixels + _gapSize / 2)
+            if (segmentPoint < GapSize / 2 ||
+                segmentPoint > TileSize + GapSize / 2)
             {
-                isPosValid = false;
-                _cursorLocation = CursorLocationType.InsideWindow;
-                return;
+                return null;
             }
 
-            row = _gridResolution.y - 1 - row;
+            row = GridResolution.y - 1 - row;
         }
 
-        isPosValid = true;
-        _cursorLocation = CursorLocationType.OnTile;
+        return _tiles[TileIndex(col, row)];
     }
-
-    private void NotifyBasedOnCursorLocation(bool isPosValid, int row, int col)
+    private UITile GetTileWithoutGapsInGrid(in Vector2Int LocalPoint)
     {
-        if (_tileUnderPointer != null)
+        int adjustedLocalPoint = (-LocalPoint.y + _tileGridSize.y / 2);
+        if (adjustedLocalPoint == TileSize * GridResolution.y)
         {
-            if (_tileUnderPointer.Pos.x != col || _tileUnderPointer.Pos.y != row)
-            { 
-                CraftingDelegatesContainer.EventTileUnderPointerGone?.Invoke();
-                _tileUnderPointer = null;
-                if (_cursorLocation == CursorLocationType.OnTile)
-                { 
-                    _tileUnderPointer = _tiles[TileIndex(col, row)];
-                    CraftingDelegatesContainer.EventTileUnderPointerCame?.Invoke(_tileUnderPointer);
-                }
-            }
+            adjustedLocalPoint--;
         }
-        else
+        int row = adjustedLocalPoint / TileSize;
+        Assert.IsTrue(row >= 0 && row < GridResolution.y);
+
+        adjustedLocalPoint = (LocalPoint.x + _tileGridSize.x / 2);
+        if (adjustedLocalPoint == TileSize * GridResolution.x)
         {
-            if (_cursorLocation == CursorLocationType.OnTile)
-            { 
-                _tileUnderPointer = _tiles[TileIndex(col, row)];
-                CraftingDelegatesContainer.EventTileUnderPointerCame?.Invoke(_tileUnderPointer);
-            }
+            adjustedLocalPoint--;
         }
-    }
+        int col = adjustedLocalPoint / TileSize;
+        Assert.IsTrue(col >= 0 && col < GridResolution.x);
 
-    public virtual void PlaceStack(UIStack stack, Vector2Int tilePos)
-    {
-        Assert.IsTrue(
-            tilePos.x >= 0 && tilePos.x < _gridResolution.x &&
-            tilePos.y >= 0 && tilePos.y < _gridResolution.y
-        );
-
-        stack.Data.TilePos = tilePos;
-        UpdateStackAnchPos(stack);
-        AddStackToTilesReferences(stack);
-    }
-
-    protected virtual void UpdateStackAnchPos(UIStack stack)
-    {
-        Vector2Int tilePos = stack.Data.TilePos;
-        Vector2 anchPos = _tiles[TileIndex(tilePos)].Rect.position;
-        anchPos.y = -UIDelegatesContainer.GetReferenceScreenResolution().y + anchPos.y;
-        Vector2Int sizeInt = stack.ItemType.Size;
-        Vector2 stackSize = new Vector2(_tileSizePixels * sizeInt.x, _tileSizePixels * sizeInt.y);
-        stack.UpdateRect(anchPos, stackSize);
-    }
-
-    protected virtual void AddStackToTilesReferences(UIStack stack)
-    { 
-        for (int y = stack.Pos.y; y < stack.Size.y + stack.Pos.y; y++)
-        {
-            for (int x = stack.Pos.x; x < stack.Size.x + stack.Pos.x; x++)
-            { 
-                _tiles[TileIndex(x, y)].PlacedStack = stack;
-            }
-        }
+        return _tiles[TileIndex(col, row)];
     }
 
     protected int TileIndex(int x, int y)
     {
-        return y * _gridResolution.x + x;
+        return y * GridResolution.x + x;
     }
-
     protected int TileIndex(Vector2Int xy)
     {
-        return xy.y * _gridResolution.x + xy.x;
+        return xy.y * GridResolution.x + xy.x;
     }
-
     protected Vector2Int TileIndex(int index)
     {
-        return new Vector2Int(index % _gridResolution.x, index / _gridResolution.x);
+        return new Vector2Int(index % GridResolution.x, index / GridResolution.x);
     }
-
-    #region Editor
-#if UNITY_EDITOR
-    public void AssignTiles(
-        UITile[,] tilesArg, 
-        int tileSizeArg,
-        int gapSizeArg,
-        Vector2Int gridSize,
-        Vector2Int borderWidthArg
-    )
-    {
-        _gridResolution = new Vector2Int(tilesArg.GetLength(0), tilesArg.GetLength(1));
-
-        _tileSizePixels = tileSizeArg;
-        _gridSize = gridSize;
-        _windowSize = gridSize + borderWidthArg;
-        _gapSize = gapSizeArg;
-
-        _tiles = new UITile[_gridResolution.x * _gridResolution.y];
-        for (int j = 0; j < _gridResolution.y; j++)
-        {
-            for (int i = 0; i < _gridResolution.x; i++)
-            {
-                _tiles[j * _gridResolution.x + i] = tilesArg[i, j];
-            }
-        }
-    }
-#endif
-    #endregion
 }

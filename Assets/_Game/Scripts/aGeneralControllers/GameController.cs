@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Assertions;
 
 public enum GameStateType
 {
@@ -94,6 +95,14 @@ public class GameController : MonoBehaviour
 
     private void OnStartGameLoadingSceneFinished()
     {
+        Assert.IsTrue(
+            _gameDesc.Levels[_currentLevel].GetTileGenParams(WindowType.CraftWindow)
+                .TilePrefab.TryGetComponent(out UITile tile)
+            &&
+            _gameDesc.Levels[_currentLevel].GetTileGenParams(WindowType.ItemsWindow)
+                .TilePrefab.TryGetComponent(out tile)
+        );
+
         _gameState = GameStateType.Crafting;
         GameDelegatesContainer.StartLevel(_gameDesc.Levels[_currentLevel]);
         GameDelegatesContainer.EventLevelStarted();

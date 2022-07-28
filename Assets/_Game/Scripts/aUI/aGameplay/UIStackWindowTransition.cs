@@ -27,23 +27,26 @@ public class UIStackWindowTransition : MonoBehaviour
     private void Awake()
     {
         TryGetComponent(out _rect);
+        
+        _craftWindowBorder = (int)(_rect.anchoredPosition.y + _rect.rect.size.y / 2);
+        _itemsWindowBorder = (int)(_rect.anchoredPosition.y - _rect.rect.size.y / 2);
+        _borderRange = _craftWindowBorder - _itemsWindowBorder;
+
 
         CraftingDelegatesContainer.EventStackWasSelected += OnStackWasSelected;
+        GameDelegatesContainer.StartLevel += OnStartLevel;
     }
 
     private void OnDestroy()
     {
         CraftingDelegatesContainer.EventStackWasSelected -= OnStackWasSelected;
+        GameDelegatesContainer.StartLevel -= OnStartLevel;
     }
 
-    private void Start()
-    {
-        _craftWindowBorder = (int)(_rect.anchoredPosition.y + _rect.rect.size.y / 2);
-        _itemsWindowBorder = (int)(_rect.anchoredPosition.y - _rect.rect.size.y / 2);
-        _borderRange = _craftWindowBorder - _itemsWindowBorder;
-
-        _craftWindowTileSize = CraftingDelegatesContainer.GetTileSizeInCraftWindow();
-        _itemsWindowTileSize = CraftingDelegatesContainer.GetTileSizeInItemsWindow();
+    private void OnStartLevel(LevelDescriptionSO levelDescriptionSO)
+    { 
+        _craftWindowTileSize = levelDescriptionSO.GetTileGenParams(WindowType.CraftWindow).TileSize;
+        _itemsWindowTileSize = levelDescriptionSO.GetTileGenParams(WindowType.ItemsWindow).TileSize;
     }
 
     private void OnStackWasSelected(UIStack selectedStack)
