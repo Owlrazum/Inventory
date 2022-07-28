@@ -4,6 +4,7 @@ using Unity.Mathematics;
 using Unity.Burst;
 
 using UnityEngine;
+using UnityEngine.Assertions;
 
 public enum RecipeQualityType
 { 
@@ -25,19 +26,21 @@ public class RecipeEvaluator : MonoBehaviour
     private int _maxRecipePosX;
     private int _maxRecipePosY;
 
+    private int _filledTilesCountOnEvaluationMoment;
+
 
     private void Awake()
     {
         _recipeDictionary = new Dictionary<int2, int>(10);
 
-        CraftingDelegatesContainer.EvaluateRecipeQuality += Evaluate;
         GameDelegatesContainer.EventLevelStarted += OnLevelStarted;
+        CraftingDelegatesContainer.EvaluateRecipeQuality += Evaluate;
     }
 
     private void OnDestroy()
     { 
-        CraftingDelegatesContainer.EvaluateRecipeQuality -= Evaluate;
         GameDelegatesContainer.EventLevelStarted -= OnLevelStarted;
+        CraftingDelegatesContainer.EvaluateRecipeQuality -= Evaluate;
     }
 
     private void OnLevelStarted()
@@ -50,6 +53,16 @@ public class RecipeEvaluator : MonoBehaviour
 
     private RecipeQualityType Evaluate()
     {
+        Assert.IsNotNull(_craftTiles);
+        _filledTilesCountOnEvaluationMoment = 0;
+        foreach (UITile tile in _craftTiles)
+        { 
+            if (tile.PlacedStack != null)
+            {
+                _filledTilesCountOnEvaluationMoment++;
+            }
+        }
+
         var result = EvaluateRecipeItemLocations(_targetItem.PerfectItemsData, RecipeQualityType.Perfect);
         if (result != RecipeQualityType.NoRecipe)
         {
@@ -89,30 +102,33 @@ public class RecipeEvaluator : MonoBehaviour
         RecipeQualityType correctRecipeQuality
     )
     {
-        _recipeDictionary.Clear();
         if (recipeItemLocations.Length > 0)
         { 
-            foreach (RecipeItemLocation ril in recipeItemLocations)
-            {
-                if (ril.Pos.x > _maxRecipePosX)
+            _recipeDictionary.Clear();
+            if (recipeItemLocations.Length == _filledTilesCountOnEvaluationMoment)
+            { 
+                foreach (RecipeItemLocation ril in recipeItemLocations)
                 {
-                    _maxRecipePosX = ril.Pos.x;
-                }
-                if (ril.Pos.y > _maxRecipePosY)
-                {
-                    _maxRecipePosY = ril.Pos.y;
-                }
-                
-                _recipeDictionary.Add(ril.Pos, ril.ID);
-            }
-
-            for (int y = 0; y < _craftGridResolution.y - _maxRecipePosY; y++)
-            {
-                for (int x = 0; x < _craftGridResolution.x - _maxRecipePosX; x++)
-                {
-                    if (IsRecipeFollowedExclusively(new int2(x, y)))
+                    if (ril.Pos.x > _maxRecipePosX)
                     {
-                        return correctRecipeQuality;
+                        _maxRecipePosX = ril.Pos.x;
+                    }
+                    if (ril.Pos.y > _maxRecipePosY)
+                    {
+                        _maxRecipePosY = ril.Pos.y;
+                    }
+                    
+                    _recipeDictionary.Add(ril.Pos, ril.ID);
+                }
+
+                for (int y = 0; y < _craftGridResolution.y - _maxRecipePosY; y++)
+                {
+                    for (int x = 0; x < _craftGridResolution.x - _maxRecipePosX; x++)
+                    {
+                        if (IsRecipeFollowedExclusively(new int2(x, y)))
+                        {
+                            return correctRecipeQuality;
+                        }
                     }
                 }
             }

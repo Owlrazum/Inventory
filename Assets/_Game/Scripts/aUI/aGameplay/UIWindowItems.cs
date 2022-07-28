@@ -66,62 +66,6 @@ public class UIWindowItems : UITilesWindow
         }
     }
 
-    protected override UITile[] GenerateTiles(in TileGenParamsSO generationParams, out RectTransform tileGridRect)
-    {
-        int rowCount = GridResolution.y;
-        int colCount = GridResolution.x;
-
-        Vector2Int gapSizeDelta = new Vector2Int(colCount - 1, rowCount - 1) * GapSize;
-        // print("gapSizeDelta: " + gapSizeDelta);
-        Vector2Int windowSize = new Vector2Int(colCount * TileSize, rowCount * TileSize) + gapSizeDelta;
-
-        _windowRect.sizeDelta = windowSize + generationParams.WindowBorderWidth;
-
-        GameObject tileGridGb = new GameObject("TileGrid", typeof(RectTransform));
-        tileGridRect = tileGridGb.GetComponent<RectTransform>();
-        tileGridRect.SetParent(_windowRect, false);
-
-        tileGridRect.anchorMin = Vector2.zero;
-        tileGridRect.anchorMax = Vector2.one;
-        tileGridRect.sizeDelta = -generationParams.WindowBorderWidth;
-
-        float scalarDeltaX = TileSize + GapSize;
-        float scalarDeltaY = TileSize + GapSize;
-        Vector2 initTilePos = Vector2.zero;
-        Vector2 rowStartTilePos = initTilePos;
-        Vector2 horizDisplacement = scalarDeltaX * Vector2.right;
-        Vector2 verticalDisplacement = scalarDeltaY * Vector2.down;
-
-        Vector2 tilePos = initTilePos;
-
-        UITile[] generatedTiles = new UITile[rowCount * GridResolution.y + colCount];
-        for (int row = 0; row < rowCount; row++)
-        {
-            for (int column = 0; column < colCount; column++)
-            {
-                UITile tile =
-                    Instantiate(generationParams.TilePrefab);
-                RectTransform tileRect = tile.GetComponent<RectTransform>();
-                tileRect.SetParent(tileGridRect);
-                tileRect.anchorMin = new Vector2(0, 1);
-                tileRect.anchorMax = new Vector2(0, 1);
-                tileRect.pivot = new Vector2(0, 1);
-                tileRect.anchoredPosition = tilePos;
-
-                tile.AssignWindowTypeOnGeneration(_windowType);
-                generatedTiles[TileIndex(column, row)] = tile;
-                tile.GenerationInitialize(new Vector2Int(column, row));
-
-                tilePos += horizDisplacement;
-            }
-            tilePos = rowStartTilePos;
-            tilePos += verticalDisplacement;
-            rowStartTilePos = tilePos;
-        }
-
-        return generatedTiles;
-    }
-
     protected override void OnLocalPointUpdate(in UITile tileUnderPointer)
     {
         CraftingDelegatesContainer.EventTileUnderPointerGone();
