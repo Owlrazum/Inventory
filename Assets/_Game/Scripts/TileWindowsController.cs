@@ -54,8 +54,7 @@ public class TileWindowsController : MonoBehaviour
 
     private void ReturnStack(UIStack stack)
     {
-        Vector2 targetPos = _itemsWindow.GetItemToTileLocalAnchPos(stack.ItemType.ID);
-        stack.Rect.SetParent(_itemsWindow.Rect, true);
+        Vector2 targetPos = _itemsWindow.GetItemToTileWorldPos(stack.ItemType.ID);
         Vector2 targetSize = Vector2.one * GetTileSizeInItemsWindow();
         stack.ReturnToPosInItemsWindow(targetPos, targetSize, _stackReturnLerpSpeed, OnReturningComplete);
     }

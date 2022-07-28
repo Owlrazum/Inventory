@@ -251,7 +251,6 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerDownUpHandle
             return;
         }
 
-
         if (RestingWindow == WindowType.ItemsWindow)
         {
             UIDelegatesContainer.BuildLog("Select itemsWindow");

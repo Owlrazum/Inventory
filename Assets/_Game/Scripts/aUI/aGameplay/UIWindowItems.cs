@@ -99,9 +99,9 @@ public class UIWindowItems : UITilesWindow
         return false;
     }
 
-    public Vector2 GetItemToTileLocalAnchPos(int itemID)
+    public Vector2 GetItemToTileWorldPos(int itemID)
     {
-        Vector3 anchPos = _tiles[_itemsTilesRelation[itemID]].Rect.anchoredPosition;
+        Vector3 anchPos = _tiles[_itemsTilesRelation[itemID]].Rect.position;
         return anchPos;
     }
 
