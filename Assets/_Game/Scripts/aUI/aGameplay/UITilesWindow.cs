@@ -129,6 +129,7 @@ public abstract class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
     {
         if (CheckIfLocalPointOutsideGrid(in localPoint))
         {
+            OnLocalPointUpdate(null);
             return;
         }
 

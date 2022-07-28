@@ -12,6 +12,8 @@ public class UIWindowCraft : UITilesWindow
     private HashSet<int> _highlightedTilesIndices;
     private HashSet<int> _highlightedStacks;
 
+    private bool _hasTileUnderPointer;
+
     protected override void Subscribe()
     {
         base.Subscribe();
@@ -42,9 +44,15 @@ public class UIWindowCraft : UITilesWindow
 
     protected override void OnLocalPointUpdate(in UITile tileUnderPointer)
     {
-        CraftingDelegatesContainer.EventTileUnderPointerGone();
-        if (tileUnderPointer != null)
+        if (_hasTileUnderPointer)
         { 
+            CraftingDelegatesContainer.EventTileUnderPointerGone();
+            _hasTileUnderPointer = false;
+        }
+
+        if (tileUnderPointer != null)
+        {
+            _hasTileUnderPointer = true;
             CraftingDelegatesContainer.EventTileUnderPointerCame(tileUnderPointer);
         }
     }

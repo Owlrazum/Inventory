@@ -15,6 +15,7 @@ public class UIWindowItems : UITilesWindow
     private RectTransform _itemStacksParent;
 
     private Dictionary<int, int> _itemsTilesRelation;
+    private bool _hasTileUnderPointer;
 
     protected override void Awake()
     {
@@ -68,9 +69,15 @@ public class UIWindowItems : UITilesWindow
 
     protected override void OnLocalPointUpdate(in UITile tileUnderPointer)
     {
-        CraftingDelegatesContainer.EventTileUnderPointerGone();
-        if (tileUnderPointer != null)
+        if (_hasTileUnderPointer)
         { 
+            CraftingDelegatesContainer.EventTileUnderPointerGone();
+            _hasTileUnderPointer = false;
+        }
+
+        if (tileUnderPointer != null)
+        {
+            _hasTileUnderPointer = true;
             CraftingDelegatesContainer.EventTileUnderPointerCame(tileUnderPointer);
         }
     }
