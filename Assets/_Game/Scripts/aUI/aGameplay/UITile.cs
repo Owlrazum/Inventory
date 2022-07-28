@@ -94,10 +94,8 @@ public class UITile : MonoBehaviour
         _image.color = Color.white;
     }
 
-#if UNITY_EDITOR
     public void AssignWindowTypeOnGeneration(WindowType windowTypeArg)
     {
         _restingWindow = windowTypeArg;
     }
-#endif
 }

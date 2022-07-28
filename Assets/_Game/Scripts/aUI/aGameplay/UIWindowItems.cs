@@ -130,7 +130,7 @@ public class UIWindowItems : UITilesWindow
     {
         Vector2Int tilePos = stack.Data.TilePos;
         Vector2 anchPos = _tiles[TileIndex(tilePos)].Rect.position;
-        anchPos.y = -UIDelegatesContainer.GetReferenceScreenResolution().y + anchPos.y;
+        // anchPos.y = -Screen.currentResolution.height + anchPos.y;
         stack.UpdateRect(anchPos, new Vector2Int(TileSize, TileSize));
     }
 

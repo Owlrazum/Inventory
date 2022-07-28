@@ -15,6 +15,6 @@ MonoBehaviour:
   _tilePrefab: {fileID: 7179047468529095230, guid: 61f510df1d1a749e79372fc462f9d4a0,
     type: 3}
   _windowBorderWidth: {x: 5, y: 10}
-  _gridResolution: {x: 3, y: 1}
+  _gridResolution: {x: 2, y: 1}
   _tileSize: 250
   _gapSize: 20

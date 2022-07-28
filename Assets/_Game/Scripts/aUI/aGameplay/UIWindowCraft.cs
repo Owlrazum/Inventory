@@ -91,7 +91,6 @@ public class UIWindowCraft : UITilesWindow
     {
         Vector2Int tilePos = stack.Data.TilePos;
         Vector2 anchPos = _tiles[TileIndex(tilePos)].Rect.position;
-        anchPos.y = -UIDelegatesContainer.GetReferenceScreenResolution().y + anchPos.y;
         Vector2Int sizeInt = stack.ItemType.Size;
         Vector2 stackSize = new Vector2(TileSize * sizeInt.x, TileSize * sizeInt.y);
         stack.UpdateRect(anchPos, stackSize);
