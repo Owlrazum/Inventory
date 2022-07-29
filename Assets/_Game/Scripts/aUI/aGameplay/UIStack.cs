@@ -278,6 +278,9 @@ public class UIStack : MonoBehaviour, IPointerTouchHandler, IPointerDownUpHandle
 
     public void ChangeSizeDuringTransition(Vector2 newSize)
     {
+        Vector3 delta = newSize - _rect.sizeDelta;
+        delta.y = -delta.y;
+        // _rect.position -= delta;
         _rect.sizeDelta = newSize;
     }
 }

@@ -202,11 +202,20 @@ public class UIStackManipulator : MonoBehaviour
                 yield break;
             }
 
-            Vector2 newPos = InputDelegatesContainer.GetPointerPosition();
-            _selectedStack.Rect.anchoredPosition += newPos - _prevPos;
-            _prevPos = newPos;
+            _selectedStack.Rect.anchoredPosition = 
+                InputDelegatesContainer.GetPointerPosition() - 
+                HalfSizeTopLeft(_selectedStack.Rect.rect.size);
             // _pointerEventsUpdater.NotifyFinishedMove();
             yield return null;
         }
+    }
+
+    /// <summary>
+    /// Unity origin is bottomLeft
+    /// </summary>
+    private Vector2 HalfSizeTopLeft(Vector2 size)
+    {
+        size.y = -size.y;
+        return size / 2;
     }
 }

@@ -110,6 +110,7 @@ public abstract class UITilesWindow : MonoBehaviour, IPointerLocalPointHandler
                 tileRect.anchorMax = new Vector2(0, 1);
                 tileRect.pivot = new Vector2(0, 1);
                 tileRect.anchoredPosition = tilePos;
+                tileRect.sizeDelta = Vector2.one * TileSize;
 
                 tile.AssignWindowTypeOnGeneration(_windowType);
                 generatedTiles[TileIndex(column, row)] = tile;
