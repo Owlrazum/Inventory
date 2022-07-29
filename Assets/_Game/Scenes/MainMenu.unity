@@ -1266,7 +1266,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc8fb03e7d60d4377b4de09e9b1d8dfa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _referenceScreenResolution: {x: 1080, y: 1920}
 --- !u!1001 &7864857199224330054
 PrefabInstance:
   m_ObjectHideFlags: 0
