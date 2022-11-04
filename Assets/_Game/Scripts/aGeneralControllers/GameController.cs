@@ -69,6 +69,11 @@ public class GameController : MonoBehaviour
             ApplicationDelegatesContainer.StartLoadingScene(_sceneIndexToTest);
         }
 #endif
+
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.Confined;
+        Cursor.SetCursor(UnityEditor.PlayerSettings.defaultCursor, Vector2.zero, CursorMode.ForceSoftware);
+        // Cursor.SetCursor();
         ApplicationDelegatesContainer.StartLoadingScene(1);
     }
 
